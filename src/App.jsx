@@ -102,7 +102,7 @@ function ArtworkSlide({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -40, scale: 0.98 }}
         transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1] }}
-        className="relative flex h-full w-full max-w-4xl flex-col gap-4 rounded-[40px] bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-black/90 p-3 sm:p-4 md:p-6 shadow-soft-xl"
+        className="relative flex h-full w-full max-w-4xl flex-col gap-4 rounded-[40px] bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-black/90 p-3 sm:p-4 md:p-6 shadow-xl"
       >
         <div className="flex items-center justify-between gap-3 px-1 pt-1 text-xs uppercase tracking-[0.25em] text-slate-400">
           <span className="pill bg-white/5 text-[0.6rem] sm:text-[0.65rem]">
@@ -228,7 +228,7 @@ function ArtistProfileView({ artistId, onBackToFeed }) {
 
   if (!artist) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-mc-bg px-4 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black px-4 text-center">
         <p className="mb-4 text-sm text-slate-300">
           Artiste introuvable. La collection a peut-être été déplacée.
         </p>
@@ -407,7 +407,7 @@ function OfferModal({ artwork, onClose }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-10 items-center justify-center gap-2 rounded-full bg-emerald-400/95 px-5 text-xs font-semibold text-emerald-950 shadow-soft-xl hover:bg-emerald-300"
+                className="flex h-10 items-center justify-center gap-2 rounded-full bg-emerald-400/95 px-5 text-xs font-semibold text-emerald-950 shadow-xl hover:bg-emerald-300"
               >
                 <BadgeDollarSign className="h-4 w-4" />
                 Confirmer au prix fixé

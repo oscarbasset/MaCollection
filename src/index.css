@@ -1,7 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+@import "tailwindcss";
 @layer base {
   :root {
     color-scheme: dark;
@@ -14,13 +11,13 @@
   }
 
   body {
-    @apply bg-mc-bg text-white antialiased;
+    @apply bg-black text-white antialiased;
   }
 }
 
 @layer components {
   .glass-panel {
-    @apply bg-white/10 backdrop-blur-xl border border-white/15 shadow-soft-xl;
+    @apply bg-white/10 backdrop-blur-xl border border-white/15 shadow-xl;
   }
 
   .pill {
