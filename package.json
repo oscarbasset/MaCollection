@@ -1,0 +1,36 @@
+{
+  "name": "macollection",
+  "version": "0.1.0",
+  "description": "MaCollection - plateforme de découverte artistique immersive (\"TikTok pour l'art\") construite avec Vite + React.",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oscarbasset/MaCollection.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/oscarbasset/MaCollection/issues"
+  },
+  "homepage": "https://github.com/oscarbasset/MaCollection#readme",
+  "dependencies": {
+    "framer-motion": "^12.33.0",
+    "lucide-react": "^0.563.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react-swc": "^4.2.3",
+    "autoprefixer": "^10.4.24",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "vite": "^7.3.1"
+  }
+}
