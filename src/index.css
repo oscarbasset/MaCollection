@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-mc-bg text-white antialiased;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/10 backdrop-blur-xl border border-white/15 shadow-soft-xl;
+  }
+
+  .pill {
+    @apply rounded-full px-3 py-1 text-xs font-medium uppercase tracking-widest;
+  }
+}
+
