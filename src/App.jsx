@@ -571,7 +571,7 @@ function ArtworkDetailModal({
     <AnimatePresence>
       {artwork && (
         <motion.div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/75 px-4 backdrop-blur-2xl"
+          className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/75 px-4 py-6 backdrop-blur-2xl sm:py-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -581,7 +581,7 @@ function ArtworkDetailModal({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 40, opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-panel w-full max-w-3xl rounded-[32px] p-4 sm:p-6 md:p-7"
+            className="glass-panel w-full max-w-3xl rounded-[32px] p-4 sm:p-6 md:p-7 max-h-[90vh] overflow-y-auto"
           >
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="space-y-1">
@@ -652,7 +652,7 @@ function ArtworkDetailModal({
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <div className="mt-4 flex flex-col gap-2 pb-1 sm:mt-5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => onOpenArtistProfile(artwork.artistId)}
@@ -683,7 +683,7 @@ function OfferModal({ artwork, onClose }) {
     <AnimatePresence>
       {artwork && (
         <motion.div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-4 backdrop-blur-2xl"
+          className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-2xl sm:py-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -693,7 +693,7 @@ function OfferModal({ artwork, onClose }) {
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 40, opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-panel w-full max-w-md rounded-[32px] p-5 sm:p-6"
+            className="glass-panel w-full max-w-md rounded-[32px] p-5 sm:p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="space-y-1">
