@@ -84,9 +84,10 @@ export const artworks = [
     price: 2400,
     mediaType: 'image',
     mediaUrl:
-      'https://images.pexels.com/photos/3404200/pexels-photo-3404200.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=1200&q=80',
     likes: 132,
     averageViewTime: 18,
+    category: 'peinture',
   },
   {
     id: 'art-lina-02',
@@ -101,6 +102,7 @@ export const artworks = [
       'https://videos.pexels.com/video-files/854149/854149-hd_1280_720_30fps.mp4',
     likes: 201,
     averageViewTime: 27,
+    category: 'style',
   },
   {
     id: 'art-lina-03',
@@ -112,9 +114,25 @@ export const artworks = [
     price: 1800,
     mediaType: 'image',
     mediaUrl:
-      'https://images.pexels.com/photos/3404209/pexels-photo-3404209.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?auto=format&fit=crop&w=1200&q=80',
     likes: 98,
     averageViewTime: 15,
+    category: 'style',
+  },
+  {
+    id: 'art-lina-04',
+    artistId: 'artist-lina-moreau',
+    collectionId: 'col-lina-pixels',
+    title: 'Signal Lost #2',
+    description:
+      'Un portrait brouillé par des glitchs colorés, comme récupéré d’une VHS abîmée.',
+    price: 2600,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1526481280695-3c687fd543c0?auto=format&fit=crop&w=1200&q=80',
+    likes: 176,
+    averageViewTime: 21,
+    category: 'style',
   },
   {
     id: 'art-malik-01',
@@ -126,9 +144,10 @@ export const artworks = [
     price: 5400,
     mediaType: 'image',
     mediaUrl:
-      'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      'https://images.unsplash.com/photo-1505842679540-5a1c49f0cde2?auto=format&fit=crop&w=1200&q=80',
     likes: 256,
     averageViewTime: 34,
+    category: 'peinture',
   },
   {
     id: 'art-malik-02',
@@ -140,9 +159,10 @@ export const artworks = [
     price: 3100,
     mediaType: 'image',
     mediaUrl:
-      'https://images.pexels.com/photos/1329510/pexels-photo-1329510.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1200&q=80',
     likes: 143,
     averageViewTime: 22,
+    category: 'peinture',
   },
   {
     id: 'art-malik-03',
@@ -157,6 +177,22 @@ export const artworks = [
       'https://videos.pexels.com/video-files/854149/854149-hd_1280_720_30fps.mp4',
     likes: 167,
     averageViewTime: 29,
+    category: 'style',
+  },
+  {
+    id: 'art-malik-04',
+    artistId: 'artist-malik-essadi',
+    collectionId: 'col-malik-structures',
+    title: 'Concrete Dreams',
+    description:
+      'Sculpture numérique d’un bloc de béton poli, éclairé comme un bijou.',
+    price: 4800,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1526481280693-3b113a42129b?auto=format&fit=crop&w=1200&q=80',
+    likes: 211,
+    averageViewTime: 26,
+    category: 'sculpture',
   },
   {
     id: 'art-aya-01',
@@ -171,6 +207,7 @@ export const artworks = [
       'https://videos.pexels.com/video-files/854149/854149-hd_1280_720_30fps.mp4',
     likes: 189,
     averageViewTime: 41,
+    category: 'style',
   },
   {
     id: 'art-aya-02',
@@ -182,9 +219,10 @@ export const artworks = [
     price: 2600,
     mediaType: 'image',
     mediaUrl:
-      'https://images.pexels.com/photos/1434608/pexels-photo-1434608.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      'https://images.unsplash.com/photo-1515165562835-c4c9e0737eaa?auto=format&fit=crop&w=1200&q=80',
     likes: 134,
     averageViewTime: 24,
+    category: 'objet',
   },
   {
     id: 'art-aya-03',
@@ -196,9 +234,40 @@ export const artworks = [
     price: 2950,
     mediaType: 'image',
     mediaUrl:
-      'https://images.pexels.com/photos/1446948/pexels-photo-1446948.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      'https://images.unsplash.com/photo-1518300670681-9fd99daedf98?auto=format&fit=crop&w=1200&q=80',
     likes: 120,
     averageViewTime: 19,
+    category: 'objet',
+  },
+  {
+    id: 'art-aya-04',
+    artistId: 'artist-aya-nakamori',
+    collectionId: 'col-aya-tides',
+    title: 'Harbor Lights',
+    description:
+      'Photographie d’un port de nuit, où les reflets colorés se dissolvent dans l’eau sombre.',
+    price: 3200,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80',
+    likes: 178,
+    averageViewTime: 28,
+    category: 'style',
+  },
+  {
+    id: 'art-lina-05',
+    artistId: 'artist-lina-moreau',
+    collectionId: 'col-lina-neon',
+    title: 'Overexposed City',
+    description:
+      'Panorama urbain surexposé où les enseignes deviennent des traits de pinceau lumineux.',
+    price: 3500,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1200&q=80',
+    likes: 203,
+    averageViewTime: 25,
+    category: 'peinture',
   },
 ];
 
