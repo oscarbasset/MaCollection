@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BadgeDollarSign,
@@ -351,7 +351,483 @@ function ArtistProfileView({ artistId, onBackToFeed }) {
   );
 }
 
+function LoginView({ artistsList, initialArtistId, onLogin, onBackToVisitor }) {
+  const [selectedArtistId, setSelectedArtistId] = useState(
+    initialArtistId ?? artistsList[0]?.id ?? '',
+  );
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (!selectedArtistId) return;
+    onLogin(selectedArtistId);
+  };
+
+  return (
+    <div className="w-full max-w-md rounded-3xl bg-slate-900/70 p-6 shadow-soft-xl">
+      <div className="mb-5 space-y-2 text-center">
+        <p className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+          Espace exposant
+        </p>
+        <h1 className="text-lg font-semibold text-slate-50">
+          Accéder à votre tableau de bord
+        </h1>
+        <p className="text-xs text-slate-300">
+          Sélectionnez un artiste pour pré-remplir le profil. Il ne s’agit pas
+          d’une authentification réelle mais d’un mode démo.
+        </p>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-4 text-sm text-slate-100">
+        <label className="block text-xs text-slate-300">
+          Artiste
+          <select
+            value={selectedArtistId}
+            onChange={(event) => setSelectedArtistId(event.target.value)}
+            className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+          >
+            {artistsList.map((artist) => (
+              <option key={artist.id} value={artist.id}>
+                {artist.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onBackToVisitor}
+            className="h-9 rounded-full border border-white/15 px-4 text-xs font-medium text-slate-100 hover:bg-white/5"
+          >
+            Revenir au mode visiteur
+          </button>
+          <button
+            type="submit"
+            className="flex h-9 items-center justify-center rounded-full bg-emerald-400/95 px-5 text-xs font-semibold text-emerald-950 shadow-soft-xl hover:bg-emerald-300"
+          >
+            Entrer dans le mode exposant
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function ExhibitorDashboard({
+  artist,
+  profile,
+  onProfileChange,
+  collections,
+  onAddCollection,
+  artworks,
+  onAddArtwork,
+  onBackToVisitor,
+}) {
+  const [localProfile, setLocalProfile] = useState({
+    name: profile.name,
+    avatarUrl: profile.avatarUrl,
+    bio: profile.bio,
+  });
+
+  const [newCollectionTitle, setNewCollectionTitle] = useState('');
+  const [newCollectionConcept, setNewCollectionConcept] = useState('');
+
+  const [newArtwork, setNewArtwork] = useState({
+    title: '',
+    imageUrl: '',
+    price: '',
+    description: '',
+    year: '',
+    category: 'peinture',
+  });
+
+  const handleProfileSave = (event) => {
+    event.preventDefault();
+    onProfileChange(localProfile);
+  };
+
+  const handleAddCollection = (event) => {
+    event.preventDefault();
+    if (!newCollectionTitle.trim()) return;
+    onAddCollection({
+      id: `user-col-${Date.now()}`,
+      artistId: artist.id,
+      title: newCollectionTitle.trim(),
+      concept: newCollectionConcept.trim() || 'Collection personnelle',
+    });
+    setNewCollectionTitle('');
+    setNewCollectionConcept('');
+  };
+
+  const handleAddArtwork = (event) => {
+    event.preventDefault();
+    if (!newArtwork.title.trim() || !newArtwork.imageUrl.trim()) return;
+    const priceValue = Number(newArtwork.price || 0);
+    const artworkToAdd = {
+      id: `user-art-${Date.now()}`,
+      artistId: artist.id,
+      collectionId: null,
+      title: newArtwork.title.trim(),
+      description: newArtwork.description.trim() || 'Œuvre ajoutée via le tableau de bord.',
+      price: Number.isFinite(priceValue) ? priceValue : 0,
+      mediaType: 'image',
+      mediaUrl: newArtwork.imageUrl.trim(),
+      likes: 0,
+      averageViewTime: 20,
+      category: newArtwork.category,
+      year: newArtwork.year.trim(),
+    };
+    onAddArtwork(artworkToAdd);
+    setNewArtwork({
+      title: '',
+      imageUrl: '',
+      price: '',
+      description: '',
+      year: '',
+      category: newArtwork.category,
+    });
+  };
+
+  return (
+    <div className="flex min-h-screen w-full bg-slate-950 text-slate-50">
+      <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-slate-800 bg-slate-950/90 px-4 py-5 sm:flex">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-slate-200">
+              MaCollection
+            </span>
+          </div>
+        </div>
+        <nav className="space-y-2 text-xs">
+          <p className="mb-2 text-[0.6rem] uppercase tracking-[0.22em] text-slate-500">
+            Mode exposant
+          </p>
+          <div className="space-y-1">
+            <span className="block rounded-xl bg-slate-800/80 px-3 py-2 text-[0.8rem] font-medium text-slate-50">
+              Tableau de bord
+            </span>
+            <span className="block rounded-xl px-3 py-1.5 text-[0.75rem] text-slate-400">
+              Biographie & profil
+            </span>
+            <span className="block rounded-xl px-3 py-1.5 text-[0.75rem] text-slate-400">
+              Collections
+            </span>
+            <span className="block rounded-xl px-3 py-1.5 text-[0.75rem] text-slate-400">
+              Œuvres
+            </span>
+          </div>
+        </nav>
+        <div className="mt-auto pt-4">
+          <button
+            type="button"
+            onClick={onBackToVisitor}
+            className="w-full rounded-full border border-slate-700 px-3 py-2 text-[0.7rem] font-medium text-slate-100 hover:bg-slate-800"
+          >
+            Revenir au mode visiteur
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 px-4 py-4 sm:px-6 md:px-10">
+        <header className="mb-5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900">
+              {profile.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={profile.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <User2 className="h-5 w-5 text-slate-400" />
+                </div>
+              )}
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">
+                Tableau de bord exposant
+              </p>
+              <h1 className="text-base font-semibold text-slate-50 sm:text-lg">
+                {profile.name}
+              </h1>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onBackToVisitor}
+            className="inline-flex items-center rounded-full border border-slate-700 px-3 py-1.5 text-[0.7rem] font-medium text-slate-100 hover:bg-slate-800"
+          >
+            Retour visiteur
+          </button>
+        </header>
+
+        <section className="mb-6 grid gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <form
+            onSubmit={handleProfileSave}
+            className="glass-panel space-y-3 rounded-3xl p-4 text-sm text-slate-100"
+          >
+            <p className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+              Biographie
+            </p>
+            <label className="block text-xs text-slate-300">
+              Nom d’artiste
+              <input
+                type="text"
+                value={localProfile.name}
+                onChange={(event) =>
+                  setLocalProfile((prev) => ({
+                    ...prev,
+                    name: event.target.value,
+                  }))
+                }
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+              />
+            </label>
+            <label className="block text-xs text-slate-300">
+              URL de photo de profil
+              <input
+                type="url"
+                value={localProfile.avatarUrl}
+                onChange={(event) =>
+                  setLocalProfile((prev) => ({
+                    ...prev,
+                    avatarUrl: event.target.value,
+                  }))
+                }
+                placeholder="https://…"
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+              />
+            </label>
+            <label className="block text-xs text-slate-300">
+              Texte de présentation
+              <textarea
+                rows={4}
+                value={localProfile.bio}
+                onChange={(event) =>
+                  setLocalProfile((prev) => ({
+                    ...prev,
+                    bio: event.target.value,
+                  }))
+                }
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+              />
+            </label>
+            <div className="flex justify-end pt-1">
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-full bg-emerald-400/95 px-4 py-1.5 text-[0.7rem] font-semibold text-emerald-950 shadow-soft-xl hover:bg-emerald-300"
+              >
+                Enregistrer la biographie
+              </button>
+            </div>
+          </form>
+
+          <form
+            onSubmit={handleAddCollection}
+            className="glass-panel space-y-3 rounded-3xl p-4 text-sm text-slate-100"
+          >
+            <p className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+              Collections
+            </p>
+            <label className="block text-xs text-slate-300">
+              Titre de la collection
+              <input
+                type="text"
+                value={newCollectionTitle}
+                onChange={(event) => setNewCollectionTitle(event.target.value)}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+              />
+            </label>
+            <label className="block text-xs text-slate-300">
+              Concept éditorial (optionnel)
+              <textarea
+                rows={3}
+                value={newCollectionConcept}
+                onChange={(event) => setNewCollectionConcept(event.target.value)}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+              />
+            </label>
+            <div className="flex justify-end pt-1">
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-full bg-slate-100 px-4 py-1.5 text-[0.7rem] font-semibold text-slate-900 shadow-soft-xl hover:bg-white"
+              >
+                Ajouter une collection
+              </button>
+            </div>
+            {collections.length > 0 && (
+              <ul className="mt-2 space-y-1.5 text-[0.7rem] text-slate-200">
+                {collections.map((collection) => (
+                  <li
+                    key={collection.id}
+                    className="flex items-center justify-between rounded-xl bg-black/40 px-3 py-1.5"
+                  >
+                    <span className="line-clamp-1">{collection.title}</span>
+                    <span className="text-[0.6rem] text-slate-400">Perso</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </form>
+        </section>
+
+        <section className="glass-panel mb-10 rounded-3xl p-4 text-sm text-slate-100">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+              Ajouter une œuvre
+            </p>
+          </div>
+          <form
+            onSubmit={handleAddArtwork}
+            className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)]"
+          >
+            <div className="space-y-3">
+              <label className="block text-xs text-slate-300">
+                Titre
+                <input
+                  type="text"
+                  value={newArtwork.title}
+                  onChange={(event) =>
+                    setNewArtwork((prev) => ({
+                      ...prev,
+                      title: event.target.value,
+                    }))
+                  }
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+                />
+              </label>
+              <label className="block text-xs text-slate-300">
+                URL de l’image
+                <input
+                  type="url"
+                  value={newArtwork.imageUrl}
+                  onChange={(event) =>
+                    setNewArtwork((prev) => ({
+                      ...prev,
+                      imageUrl: event.target.value,
+                    }))
+                  }
+                  placeholder="https://images.unsplash.com/…"
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+                />
+              </label>
+              <label className="block text-xs text-slate-300">
+                Description courte
+                <textarea
+                  rows={3}
+                  value={newArtwork.description}
+                  onChange={(event) =>
+                    setNewArtwork((prev) => ({
+                      ...prev,
+                      description: event.target.value,
+                    }))
+                  }
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+                />
+              </label>
+            </div>
+            <div className="space-y-3">
+              <label className="block text-xs text-slate-300">
+                Prix (EUR)
+                <input
+                  type="number"
+                  min="0"
+                  value={newArtwork.price}
+                  onChange={(event) =>
+                    setNewArtwork((prev) => ({
+                      ...prev,
+                      price: event.target.value,
+                    }))
+                  }
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-xs text-slate-300">
+                  Année
+                  <input
+                    type="text"
+                    value={newArtwork.year}
+                    onChange={(event) =>
+                      setNewArtwork((prev) => ({
+                        ...prev,
+                        year: event.target.value,
+                      }))
+                    }
+                    placeholder="2024"
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+                  />
+                </label>
+                <label className="block text-xs text-slate-300">
+                  Catégorie
+                  <select
+                    value={newArtwork.category}
+                    onChange={(event) =>
+                      setNewArtwork((prev) => ({
+                        ...prev,
+                        category: event.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+                  >
+                    <option value="peinture">Peinture</option>
+                    <option value="sculpture">Sculpture</option>
+                    <option value="style">Style artistique</option>
+                    <option value="objet">Objet</option>
+                  </select>
+                </label>
+              </div>
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  className="inline-flex items-center rounded-full bg-emerald-400/95 px-4 py-1.5 text-[0.7rem] font-semibold text-emerald-950 shadow-soft-xl hover:bg-emerald-300"
+                >
+                  Ajouter l’œuvre au catalogue
+                </button>
+              </div>
+            </div>
+          </form>
+
+          {artworks.length > 0 && (
+            <div className="mt-4 border-t border-white/10 pt-3">
+              <p className="mb-2 text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+                Dernières œuvres ajoutées
+              </p>
+              <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3">
+                {artworks.map((artwork) => (
+                  <div
+                    key={artwork.id}
+                    className="flex items-center gap-2 rounded-2xl bg-black/40 p-2"
+                  >
+                    <div className="h-12 w-12 overflow-hidden rounded-xl bg-black/60">
+                      <img
+                        src={artwork.mediaUrl}
+                        alt={artwork.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="line-clamp-1 text-[0.75rem] font-medium text-slate-50">
+                        {artwork.title}
+                      </p>
+                      <p className="text-[0.65rem] text-slate-400">
+                        {artwork.year || 'Année non renseignée'} ·{' '}
+                        {formatPrice(artwork.price)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+}
+
 function CatalogView({
+  artworksList,
   likedById,
   onToggleLike,
   onOpenOffer,
@@ -372,7 +848,7 @@ function CatalogView({
   const filteredArtworks = useMemo(() => {
     const q = query.toLowerCase().trim();
 
-    return artworks.filter((artwork) => {
+    return artworksList.filter((artwork) => {
       const artist = getArtistById(artwork.artistId);
       const category = artwork.category ?? 'autre';
 
@@ -754,6 +1230,25 @@ function OfferModal({ artwork, onClose }) {
 }
 
 export default function App() {
+  const [role, setRole] = useState('visitor');
+  const [isExhibitorAuthenticated, setIsExhibitorAuthenticated] =
+    useState(false);
+  const [exhibitorArtistId, setExhibitorArtistId] = useState(
+    'artist-lina-moreau',
+  );
+  const [exhibitorProfile, setExhibitorProfile] = useState({
+    name: '',
+    avatarUrl: '',
+    bio: '',
+  });
+  const [exhibitorCollections, setExhibitorCollections] = useState([]);
+  const [userArtworks, setUserArtworks] = useState([]);
+
+  const allArtworks = useMemo(
+    () => [...artworks, ...userArtworks],
+    [userArtworks],
+  );
+
   const [feed, setFeed] = useState(artworks);
   const [likedById, setLikedById] = useState({});
   const [activeOfferArtwork, setActiveOfferArtwork] = useState(null);
@@ -763,6 +1258,64 @@ export default function App() {
     artistId: null,
   });
   const [view, setView] = useState('catalog');
+
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const raw = window.localStorage.getItem('macollection_exhibitor_v1');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed.role) setRole(parsed.role);
+      if (typeof parsed.isExhibitorAuthenticated === 'boolean') {
+        setIsExhibitorAuthenticated(parsed.isExhibitorAuthenticated);
+      }
+      if (parsed.exhibitorArtistId) {
+        setExhibitorArtistId(parsed.exhibitorArtistId);
+      }
+      if (parsed.exhibitorProfile) {
+        setExhibitorProfile(parsed.exhibitorProfile);
+      }
+      if (Array.isArray(parsed.exhibitorCollections)) {
+        setExhibitorCollections(parsed.exhibitorCollections);
+      }
+      if (Array.isArray(parsed.userArtworks)) {
+        setUserArtworks(parsed.userArtworks);
+      }
+    } catch (error) {
+      console.error('Erreur chargement état exposant', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const payload = {
+        role,
+        isExhibitorAuthenticated,
+        exhibitorArtistId,
+        exhibitorProfile,
+        exhibitorCollections,
+        userArtworks,
+      };
+      window.localStorage.setItem(
+        'macollection_exhibitor_v1',
+        JSON.stringify(payload),
+      );
+    } catch (error) {
+      console.error('Erreur sauvegarde état exposant', error);
+    }
+  }, [
+    role,
+    isExhibitorAuthenticated,
+    exhibitorArtistId,
+    exhibitorProfile,
+    exhibitorCollections,
+    userArtworks,
+  ]);
+
+  useEffect(() => {
+    setFeed(allArtworks);
+  }, [allArtworks]);
 
   const handleToggleLike = (artworkId) => {
     setLikedById((prev) => {
@@ -775,7 +1328,7 @@ export default function App() {
         setFeed((currentFeed) => {
           const pivot =
             currentFeed.find((a) => a.id === artworkId) ??
-            artworks.find((a) => a.id === artworkId);
+            allArtworks.find((a) => a.id === artworkId);
           if (!pivot) return currentFeed;
           return reorderFeed(currentFeed, pivot);
         });
@@ -802,7 +1355,64 @@ export default function App() {
     setActiveDetailArtwork(artwork);
   };
 
-  if (view === 'immersive' && immersiveView.mode === 'artist' && immersiveView.artistId) {
+  const handleExhibitorAccessClick = () => {
+    setRole('exhibitor');
+  };
+
+  const handleBackToVisitor = () => {
+    setRole('visitor');
+  };
+
+  const effectiveExhibitorBaseArtist =
+    artists.find((artist) => artist.id === exhibitorArtistId) ?? artists[0];
+
+  const effectiveExhibitorProfile = {
+    name: exhibitorProfile.name || effectiveExhibitorBaseArtist?.name || '',
+    avatarUrl:
+      exhibitorProfile.avatarUrl || effectiveExhibitorBaseArtist?.avatarUrl || '',
+    bio: exhibitorProfile.bio || effectiveExhibitorBaseArtist?.bio || '',
+  };
+
+  if (role === 'exhibitor') {
+    if (!isExhibitorAuthenticated) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-slate-50">
+          <LoginView
+            artistsList={artists}
+            initialArtistId={exhibitorArtistId}
+            onLogin={(artistId) => {
+              setExhibitorArtistId(artistId);
+              setIsExhibitorAuthenticated(true);
+            }}
+            onBackToVisitor={handleBackToVisitor}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <ExhibitorDashboard
+        artist={effectiveExhibitorBaseArtist}
+        profile={effectiveExhibitorProfile}
+        onProfileChange={setExhibitorProfile}
+        collections={exhibitorCollections}
+        onAddCollection={(collection) =>
+          setExhibitorCollections((previous) => [...previous, collection])
+        }
+        artworks={userArtworks}
+        onAddArtwork={(artwork) =>
+          setUserArtworks((previous) => [...previous, artwork])
+        }
+        onBackToVisitor={handleBackToVisitor}
+      />
+    );
+  }
+
+  if (
+    view === 'immersive' &&
+    immersiveView.mode === 'artist' &&
+    immersiveView.artistId
+  ) {
     return (
       <>
         <ArtistProfileView
@@ -824,15 +1434,25 @@ export default function App() {
               MaCollection
             </span>
           </div>
-          <span className="hidden text-[0.6rem] uppercase tracking-[0.25em] text-slate-400 sm:inline">
-            {view === 'catalog' ? 'Explorer' : 'Balade immersive'}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="hidden text-[0.6rem] uppercase tracking-[0.25em] text-slate-400 sm:inline">
+              {view === 'catalog' ? 'Explorer' : 'Balade immersive'}
+            </span>
+            <button
+              type="button"
+              onClick={handleExhibitorAccessClick}
+              className="hidden rounded-full border border-white/20 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-slate-100 hover:bg-white/10 sm:inline-flex"
+            >
+              Accès exposant
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="relative flex-1 pt-16 pb-20">
         {view === 'catalog' ? (
           <CatalogView
+            artworksList={allArtworks}
             likedById={likedById}
             onToggleLike={handleToggleLike}
             onOpenOffer={handleOpenOffer}
