@@ -10,21 +10,49 @@ export const artists = [
     name: 'Lina Moreau',
     bio: 'Artiste numérique basée à Paris, Lina explore les frontières entre lumière, glitch et mémoire. Ses pièces jouent avec la persistance rétinienne et les flux vidéos compressés.',
     avatarUrl:
-      'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80',
   },
   {
     id: 'artist-malik-essadi',
     name: 'Malik Essadi',
     bio: 'Peintre et sculpteur, Malik construit des architectures imaginaires inspirées des médinas et des skylines contemporaines. Son travail est intensément tactile, même en numérique.',
     avatarUrl:
-      'https://images.pexels.com/photos/1704488/pexels-photo-1704488.jpeg?auto=compress&cs=tinysrgb&w=200',
+      'https://images.unsplash.com/photo-1525134479668-1bee5c7c6845?auto=format&fit=crop&w=200&q=80',
   },
   {
     id: 'artist-aya-nakamori',
     name: 'Aya Nakamori',
     bio: 'Aya travaille à l’intersection de la photographie et du son. Ses vidéos lentes sont pensées comme des haïkus visuels sur le temps qui passe.',
     avatarUrl:
-      'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200',
+      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80',
+  },
+  {
+    id: 'artist-sofia-klein',
+    name: 'Sofia Klein',
+    bio: 'Peintre berlinoise, Sofia travaille des surfaces très texturées où les couches de peinture racontent des fragments de mémoire urbaine.',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=200&q=80',
+  },
+  {
+    id: 'artist-idriss-ben-amar',
+    name: 'Idriss Ben Amar',
+    bio: 'Sculpteur basé à Marseille, Idriss assemble béton, métal et verre pour construire des totems minimalistes.',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
+  },
+  {
+    id: 'artist-clara-rossi',
+    name: 'Clara Rossi',
+    bio: 'Photographe italienne, Clara documente les ateliers d’artistes et les détails anodins qui précèdent la création.',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80',
+  },
+  {
+    id: 'artist-jonas-kappel',
+    name: 'Jonas Kappel',
+    bio: 'Artiste multidisciplinaire de Copenhague, Jonas crée des installations lumineuses à partir d’objets trouvés.',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1494797710133-75adf6c1f4a3?auto=format&fit=crop&w=200&q=80',
   },
 ];
 
@@ -70,6 +98,62 @@ export const collections = [
     title: 'Les trains lents',
     concept:
       'Série sur les trains régionaux japonais, où presque rien ne se passe. Tout est dans l’atmosphère.',
+  },
+  {
+    id: 'col-sofia-textures',
+    artistId: 'artist-sofia-klein',
+    title: 'Palimpsestes',
+    concept:
+      'Toiles épaisses recouvertes de couches qui laissent deviner des fragments effacés.',
+  },
+  {
+    id: 'col-sofia-chromes',
+    artistId: 'artist-sofia-klein',
+    title: 'Cold Chromes',
+    concept:
+      'Travail sur des palettes froides, inspirées des façades industrielles de Berlin.',
+  },
+  {
+    id: 'col-idriss-monoliths',
+    artistId: 'artist-idriss-ben-amar',
+    title: 'Monolithes',
+    concept:
+      'Sculptures massives en béton poli qui semblent flotter dans l’espace.',
+  },
+  {
+    id: 'col-idriss-fragments',
+    artistId: 'artist-idriss-ben-amar',
+    title: 'Fragments',
+    concept:
+      'Assemblages de morceaux de métal récupéré, réorganisés en constellations minimales.',
+  },
+  {
+    id: 'col-clara-ateliers',
+    artistId: 'artist-clara-rossi',
+    title: 'Ateliers silencieux',
+    concept:
+      'Série de photographies d’ateliers d’artistes entre deux œuvres, sans présence humaine.',
+  },
+  {
+    id: 'col-clara-vitres',
+    artistId: 'artist-clara-rossi',
+    title: 'Vitrines floues',
+    concept:
+      'Reflets captés à travers des vitrines, entre intérieur et extérieur.',
+  },
+  {
+    id: 'col-jonas-lights',
+    artistId: 'artist-jonas-kappel',
+    title: 'Borrowed Lights',
+    concept:
+      'Installations lumineuses composées uniquement de lampes récupérées dans la rue.',
+  },
+  {
+    id: 'col-jonas-objects',
+    artistId: 'artist-jonas-kappel',
+    title: 'Found Choreographies',
+    concept:
+      'Objets trouvés mis en scène comme des personnages figés au milieu d’un mouvement.',
   },
 ];
 
@@ -268,6 +352,246 @@ export const artworks = [
     likes: 203,
     averageViewTime: 25,
     category: 'peinture',
+  },
+  {
+    id: 'art-sofia-01',
+    artistId: 'artist-sofia-klein',
+    collectionId: 'col-sofia-textures',
+    title: 'Surface 27B',
+    description:
+      'Grande toile presque monochrome où des griffures révèlent les couches de peinture sous-jacentes.',
+    price: 4100,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=1200&q=80',
+    likes: 145,
+    averageViewTime: 23,
+    category: 'peinture',
+  },
+  {
+    id: 'art-sofia-02',
+    artistId: 'artist-sofia-klein',
+    collectionId: 'col-sofia-textures',
+    title: 'Blue Ashes',
+    description:
+      'Empâtements bleus et gris qui rappellent un mur effacé puis repeint des dizaines de fois.',
+    price: 3800,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1519710164239-5ac8a301cdf0?auto=format&fit=crop&w=1200&q=80',
+    likes: 122,
+    averageViewTime: 20,
+    category: 'peinture',
+  },
+  {
+    id: 'art-sofia-03',
+    artistId: 'artist-sofia-klein',
+    collectionId: 'col-sofia-chromes',
+    title: 'Industrial Light',
+    description:
+      'Abstraction froide inspirée des reflets métalliques d’un entrepôt au petit matin.',
+    price: 4400,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1526481280694-3b113a42129b?auto=format&fit=crop&w=1200&q=80',
+    likes: 167,
+    averageViewTime: 27,
+    category: 'peinture',
+  },
+  {
+    id: 'art-idriss-01',
+    artistId: 'artist-idriss-ben-amar',
+    collectionId: 'col-idriss-monoliths',
+    title: 'Totem 04',
+    description:
+      'Bloc de béton blanc nervuré de lignes fines, posé sur une base de métal brut.',
+    price: 6900,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
+    likes: 211,
+    averageViewTime: 32,
+    category: 'sculpture',
+  },
+  {
+    id: 'art-idriss-02',
+    artistId: 'artist-idriss-ben-amar',
+    collectionId: 'col-idriss-monoliths',
+    title: 'Vertical Split',
+    description:
+      'Deux colonnes de béton séparées par une fente lumineuse, comme un paysage miniature.',
+    price: 7200,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1545235617-9465c4b8baad?auto=format&fit=crop&w=1200&q=80',
+    likes: 189,
+    averageViewTime: 30,
+    category: 'sculpture',
+  },
+  {
+    id: 'art-idriss-03',
+    artistId: 'artist-idriss-ben-amar',
+    collectionId: 'col-idriss-fragments',
+    title: 'Rust Constellation',
+    description:
+      'Fragments de métal rouillé assemblés sur une plaque sombre, comme une carte de ciel inversée.',
+    price: 3500,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?auto=format&fit=crop&w=1200&q=80',
+    likes: 132,
+    averageViewTime: 21,
+    category: 'objet',
+  },
+  {
+    id: 'art-idriss-04',
+    artistId: 'artist-idriss-ben-amar',
+    collectionId: 'col-idriss-fragments',
+    title: 'Broken Grid',
+    description:
+      'Carrés de métal découpés puis réassemblés en un damier volontairement incomplet.',
+    price: 3300,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&w=1200&q=80',
+    likes: 118,
+    averageViewTime: 19,
+    category: 'objet',
+  },
+  {
+    id: 'art-clara-01',
+    artistId: 'artist-clara-rossi',
+    collectionId: 'col-clara-ateliers',
+    title: 'Studio Corner',
+    description:
+      'Un coin d’atelier baigné d’une lumière laiteuse, avec une chaise tachée de peinture.',
+    price: 1900,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=1200&q=80',
+    likes: 167,
+    averageViewTime: 24,
+    category: 'objet',
+  },
+  {
+    id: 'art-clara-02',
+    artistId: 'artist-clara-rossi',
+    collectionId: 'col-clara-ateliers',
+    title: 'Drying Canvas',
+    description:
+      'Vue rapprochée d’une toile en train de sécher, suspendue à côté de pinceaux usés.',
+    price: 2100,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&w=1200&q=80',
+    likes: 138,
+    averageViewTime: 22,
+    category: 'style',
+  },
+  {
+    id: 'art-clara-03',
+    artistId: 'artist-clara-rossi',
+    collectionId: 'col-clara-vitres',
+    title: 'Window Fog',
+    description:
+      'Photographie d’une vitre embuée où l’on devine des sculptures floues à l’intérieur.',
+    price: 2300,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1438109491414-7198515b166b?auto=format&fit=crop&w=1200&q=80',
+    likes: 125,
+    averageViewTime: 20,
+    category: 'style',
+  },
+  {
+    id: 'art-clara-04',
+    artistId: 'artist-clara-rossi',
+    collectionId: 'col-clara-vitres',
+    title: 'Gallery Night',
+    description:
+      'Reflets de néons sur une vitrine de galerie, où les œuvres se mélangent à la ville.',
+    price: 2600,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80',
+    likes: 179,
+    averageViewTime: 26,
+    category: 'style',
+  },
+  {
+    id: 'art-jonas-01',
+    artistId: 'artist-jonas-kappel',
+    collectionId: 'col-jonas-lights',
+    title: 'Borrowed Neon',
+    description:
+      'Installation constituée uniquement de tubes néon récupérés, assemblés en cercle imparfait.',
+    price: 5100,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?auto=format&fit=crop&w=1200&q=80',
+    likes: 214,
+    averageViewTime: 33,
+    category: 'objet',
+  },
+  {
+    id: 'art-jonas-02',
+    artistId: 'artist-jonas-kappel',
+    collectionId: 'col-jonas-lights',
+    title: 'Cable Forest',
+    description:
+      'Forêt de câbles électriques suspendus où chaque ampoule pulse à un rythme différent.',
+    price: 4800,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=1200&q=80',
+    likes: 192,
+    averageViewTime: 30,
+    category: 'objet',
+  },
+  {
+    id: 'art-jonas-03',
+    artistId: 'artist-jonas-kappel',
+    collectionId: 'col-jonas-objects',
+    title: 'Chair Orbit',
+    description:
+      'Une simple chaise entourée de cercles de lumière projetés, comme en orbite silencieuse.',
+    price: 2700,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+    likes: 163,
+    averageViewTime: 23,
+    category: 'objet',
+  },
+  {
+    id: 'art-jonas-04',
+    artistId: 'artist-jonas-kappel',
+    collectionId: 'col-jonas-objects',
+    title: 'Table Still Life',
+    description:
+      'Assemblage d’objets trouvés sur une table blanche, éclairés comme une nature morte classique.',
+    price: 2500,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&w=1200&q=80',
+    likes: 149,
+    averageViewTime: 21,
+    category: 'objet',
+  },
+  {
+    id: 'art-jonas-05',
+    artistId: 'artist-jonas-kappel',
+    collectionId: 'col-jonas-lights',
+    title: 'Afterglow',
+    description:
+      'Photographie d’une installation lumineuse éteinte, où seules subsistent des traces de lumière sur les murs.',
+    price: 3000,
+    mediaType: 'image',
+    mediaUrl:
+      'https://images.unsplash.com/photo-1487412912498-0447578fcca8?auto=format&fit=crop&w=1200&q=80',
+    likes: 171,
+    averageViewTime: 24,
+    category: 'style',
   },
 ];
 

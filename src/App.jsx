@@ -103,35 +103,26 @@ function ArtworkSlide({
   const displayedLikes = artwork.likes + (isLiked ? 1 : 0);
 
   return (
-    <section className="relative h-screen snap-start">
+    <section className="relative h-screen snap-center flex items-center justify-center bg-black">
       <motion.div
         layout
         initial={{ opacity: 0, y: 40, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -40, scale: 0.98 }}
         transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1] }}
-        className="relative flex h-full w-full flex-col bg-black"
+        className="relative flex h-full w-full items-center justify-center"
       >
-        <div className="flex items-center justify-between gap-3 px-3 pt-3 text-xs uppercase tracking-[0.25em] text-slate-400">
-          <span className="pill bg-white/5 text-[0.6rem] sm:text-[0.65rem]">
-            Balade
-          </span>
-          <span className="hidden sm:inline-flex text-[0.6rem]">
-            Glissez vers le bas pour continuer
-          </span>
-        </div>
-
-        <div className="relative flex-1 overflow-hidden">
+        <div className="relative h-full w-full md:h-[90vh] md:w-auto md:aspect-[9/16]">
           <ArtworkMedia
             mediaType={artwork.mediaType}
             mediaUrl={artwork.mediaUrl}
             title={artwork.title}
           />
 
-          {/* Overlay principal : infos œuvre + CTA */}
-          <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4 sm:p-6 md:p-8">
-            <div className="flex items-start justify-between gap-3">
-              <div className="pointer-events-auto inline-flex items-center gap-3 rounded-full bg-black/40 px-3 py-1.5 text-xs text-slate-200 backdrop-blur-2xl">
+          {/* Overlay : infos artiste en haut, titre + description en bas */}
+          <div className="pointer-events-none absolute inset-0 flex flex-col">
+            <div className="flex items-start justify-between px-4 pt-4 sm:px-6">
+              <div className="pointer-events-auto inline-flex items-center gap-3 rounded-full bg-black/45 px-3 py-1.5 text-xs text-slate-200 backdrop-blur-2xl">
                 <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/40">
                   {artist?.avatarUrl ? (
                     <img
@@ -155,56 +146,52 @@ function ArtworkSlide({
                 </div>
               </div>
 
-              <div className="pointer-events-auto flex flex-col items-end gap-2 text-right">
-                <div className="glass-panel flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-slate-100">
-                  <BadgeDollarSign className="h-3.5 w-3.5 text-emerald-300" />
-                  <span className="font-medium">{formatPrice(artwork.price)}</span>
-                </div>
-                <div className="rounded-full bg-black/40 px-2.5 py-1 text-[0.6rem] text-slate-200 backdrop-blur-lg">
-                  Temps de vue moyen : {formatSeconds(artwork.averageViewTime)}
-                </div>
+              <div className="pointer-events-auto rounded-full bg-black/50 px-2.5 py-1 text-[0.6rem] text-slate-200 backdrop-blur-lg">
+                Temps de vue moyen : {formatSeconds(artwork.averageViewTime)}
               </div>
             </div>
 
-            <div className="pointer-events-auto flex items-end justify-between gap-4">
-              <div className="max-w-[70%] space-y-1.5 text-left sm:max-w-md">
+            <div className="mt-auto px-4 pb-6 sm:px-6 sm:pb-8">
+              <div className="max-w-md rounded-3xl bg-gradient-to-t from-black/85 via-black/60 to-transparent p-3 sm:p-4">
                 <h2 className="text-balance text-lg font-semibold text-slate-50 sm:text-xl md:text-2xl">
                   {artwork.title}
                 </h2>
-                <p className="line-clamp-3 text-xs text-slate-200/90 sm:text-sm md:text-[0.95rem]">
+                <p className="mt-1 text-xs text-slate-200/95 sm:text-sm md:text-[0.95rem]">
                   {artwork.description}
                 </p>
-              </div>
-
-              <div className="flex flex-col items-center gap-2 text-xs text-slate-100">
-                <button
-                  type="button"
-                  onClick={onToggleLike}
-                  className="glass-panel flex h-11 w-11 items-center justify-center rounded-full transition hover:scale-[1.04] hover:bg-white/15 active:scale-[0.96]"
-                >
-                  <Heart
-                    className={`h-5 w-5 ${
-                      isLiked ? 'fill-rose-500 text-rose-400' : 'text-slate-100'
-                    }`}
-                  />
-                </button>
-                <span className="text-[0.6rem] uppercase tracking-[0.2em] text-slate-200/90">
-                  {displayedLikes.toLocaleString('fr-FR')}
-                </span>
               </div>
             </div>
           </div>
 
-          {/* Panneau d’actions flottantes à droite (mobile-friendly) */}
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-end px-3 sm:px-5">
-            <div className="pointer-events-auto flex flex-col items-center gap-2">
+          {/* Panneau d’actions flottantes à droite (like, prix, profil) */}
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-end pr-3 sm:pr-5">
+            <div className="pointer-events-auto flex flex-col items-center gap-3 text-xs text-slate-100">
+              <button
+                type="button"
+                onClick={onToggleLike}
+                className="glass-panel flex h-11 w-11 items-center justify-center rounded-full transition hover:scale-[1.04] hover:bg-white/15 active:scale-[0.96]"
+              >
+                <Heart
+                  className={`h-5 w-5 ${
+                    isLiked ? 'fill-rose-500 text-rose-400' : 'text-slate-100'
+                  }`}
+                />
+              </button>
+              <span className="text-[0.6rem] uppercase tracking-[0.2em] text-slate-200/90">
+                {displayedLikes.toLocaleString('fr-FR')}
+              </span>
+
               <button
                 type="button"
                 onClick={onOpenOffer}
-                className="glass-panel flex h-11 w-11 items-center justify-center rounded-full text-xs font-medium text-emerald-100 transition hover:scale-[1.04] hover:bg-emerald-500/20 active:scale-[0.96]"
+                className="glass-panel flex h-12 w-20 flex-col items-center justify-center rounded-full text-[0.6rem] font-medium text-emerald-100 transition hover:scale-[1.04] hover:bg-emerald-500/20 active:scale-[0.96]"
               >
-                <BadgeDollarSign className="h-5 w-5" />
+                <BadgeDollarSign className="h-4 w-4" />
+                <span className="mt-0.5">
+                  {formatPrice(artwork.price).replace(/\s?EUR/, '€')}
+                </span>
               </button>
+
               <button
                 type="button"
                 onClick={onOpenArtistProfile}
@@ -1426,30 +1413,38 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-black via-mc-bg to-black">
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-20 flex justify-center pt-3">
-        <div className="pointer-events-auto flex w-full max-w-4xl items-center justify-between px-4 sm:px-6 md:px-8">
-          <div className="inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-xs text-slate-100 backdrop-blur-2xl">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            <span className="uppercase tracking-[0.25em] text-[0.6rem]">
-              MaCollection
-            </span>
+      {!(role === 'visitor' && view === 'immersive' && immersiveView.mode === 'feed') && (
+        <header className="pointer-events-none fixed inset-x-0 top-0 z-20 flex justify-center pt-3">
+          <div className="pointer-events-auto flex w-full max-w-4xl items-center justify-between px-4 sm:px-6 md:px-8">
+            <div className="inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-xs text-slate-100 backdrop-blur-2xl">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span className="uppercase tracking-[0.25em] text-[0.6rem]">
+                MaCollection
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="hidden text-[0.6rem] uppercase tracking-[0.25em] text-slate-400 sm:inline">
+                {view === 'catalog' ? 'Explorer' : 'Balade immersive'}
+              </span>
+              <button
+                type="button"
+                onClick={handleExhibitorAccessClick}
+                className="hidden rounded-full border border-white/20 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-slate-100 hover:bg-white/10 sm:inline-flex"
+              >
+                Accès exposant
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="hidden text-[0.6rem] uppercase tracking-[0.25em] text-slate-400 sm:inline">
-              {view === 'catalog' ? 'Explorer' : 'Balade immersive'}
-            </span>
-            <button
-              type="button"
-              onClick={handleExhibitorAccessClick}
-              className="hidden rounded-full border border-white/20 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-slate-100 hover:bg-white/10 sm:inline-flex"
-            >
-              Accès exposant
-            </button>
-          </div>
-        </div>
-      </header>
+        </header>
+      )}
 
-      <main className="relative flex-1 pt-16 pb-20">
+      <main
+        className={
+          view === 'catalog'
+            ? 'relative flex-1 pt-16 pb-20'
+            : 'relative flex-1 pb-20'
+        }
+      >
         {view === 'catalog' ? (
           <CatalogView
             artworksList={allArtworks}
