@@ -122,10 +122,10 @@ function ArtworkSlide({
             title={artwork.title}
           />
 
-          {/* Overlay : infos artiste en haut (safe area), titre + description en bas */}
+          {/* Overlay : infos artiste en haut (marge 20px), titre + description tout en bas */}
           <div className="pointer-events-none absolute inset-0 flex flex-col">
-            <div className="safe-area-top flex items-start justify-between px-4 pt-4 sm:px-6 md:pt-4">
-              <div className="pointer-events-auto inline-flex items-center gap-3 rounded-full bg-black/45 px-3 py-1.5 text-xs text-slate-200 backdrop-blur-2xl">
+            <div className="safe-area-top flex items-start justify-between px-4 pt-5 sm:px-6 md:pt-5">
+              <div className="pointer-events-auto inline-flex items-center gap-3 rounded-full bg-black/45 px-3 py-1.5 text-xs text-slate-200 backdrop-blur-2xl md:bg-black/50 md:backdrop-blur-none">
                 <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/40">
                   {artist?.avatarUrl ? (
                     <img
@@ -150,18 +150,18 @@ function ArtworkSlide({
                 </div>
               </div>
 
-              <div className="pointer-events-auto rounded-full bg-black/50 px-2.5 py-1 text-[0.6rem] text-slate-200 backdrop-blur-lg">
+              <div className="pointer-events-auto rounded-full bg-black/50 px-2.5 py-1 text-[0.6rem] text-slate-200 backdrop-blur-lg md:bg-black/55 md:backdrop-blur-none">
                 Temps de vue moyen : {formatSeconds(artwork.averageViewTime)}
               </div>
             </div>
 
-            {/* Titre + description en overlay juste au-dessus de la bande noire, text-shadow pour lisibilité */}
-            <div className="pointer-events-auto absolute bottom-0 left-0 right-0">
+            {/* Titre + description tout en bas de l'image, dégradé léger au ras de la barre noire */}
+            <div className="pointer-events-auto absolute bottom-0 left-0 right-0 flex flex-col justify-end">
               <div
-                className="balade-gradient-bottom absolute inset-0 h-[30%] min-h-[120px]"
+                className="balade-gradient-bottom absolute bottom-0 left-0 right-0 w-full"
                 aria-hidden
               />
-              <div className="relative px-4 pb-6 pt-3 sm:px-6 md:pb-8">
+              <div className="relative px-4 pb-1 pt-8 sm:px-6 md:pb-1 md:pt-10">
                 <h2 className="balade-overlay-text text-balance text-lg font-semibold text-slate-50 sm:text-xl md:text-2xl">
                   {artwork.title}
                 </h2>
