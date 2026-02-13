@@ -82,6 +82,7 @@ function ArtworkMedia({ mediaType, mediaUrl, title }) {
         alt={title}
         className="h-full w-full object-cover"
         loading="lazy"
+        referrerPolicy="no-referrer"
       />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/25" />
     </div>
@@ -129,6 +130,7 @@ function ArtworkSlide({
                       src={artist.avatarUrl}
                       alt={artist.name}
                       className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <User2 className="h-3.5 w-3.5 opacity-70" />
@@ -263,6 +265,7 @@ function ArtistProfileView({ artistId, onBackToFeed }) {
                   src={artist.avatarUrl}
                   alt={artist.name}
                   className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
@@ -523,6 +526,7 @@ function ExhibitorDashboard({
                   src={profile.avatarUrl}
                   alt={profile.name}
                   className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
@@ -791,6 +795,7 @@ function ExhibitorDashboard({
                         src={artwork.mediaUrl}
                         alt={artwork.title}
                         className="h-full w-full object-cover"
+                        referrerPolicy="no-referrer"
                       />
                     </div>
                     <div className="flex-1">
@@ -908,6 +913,7 @@ function CatalogView({
                   alt={artwork.title}
                   className="h-full w-full object-cover"
                   loading="lazy"
+                  referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/85 via-black/25 to-transparent p-2.5">
                   <div className="flex items-start justify-between gap-1 text-[0.6rem] text-slate-200">
