@@ -23,5 +23,29 @@
   .pill {
     @apply rounded-full px-3 py-1 text-xs font-medium uppercase tracking-widest;
   }
+
+  /* Mode Balade mobile : hauteur dynamique et safe areas */
+  .balade-viewport {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .balade-slide {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .safe-area-top {
+    padding-top: max(env(safe-area-inset-top), 40px);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+  /* Dégradé bas d’image pour lisibilité du texte (≈ 30 % hauteur) */
+  .balade-gradient-bottom {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+  }
 }
 

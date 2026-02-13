@@ -81,7 +81,7 @@ function ArtworkMedia({ mediaType, mediaUrl, title }) {
         src={mediaUrl}
         alt={title}
         className="h-full w-full"
-        style={{ objectFit: 'cover' }}
+        style={{ objectFit: 'cover', objectPosition: 'center' }}
         loading="eager"
         referrerPolicy="no-referrer"
       />
@@ -105,7 +105,7 @@ function ArtworkSlide({
   const displayedLikes = artwork.likes + (isLiked ? 1 : 0);
 
   return (
-    <section className="relative h-screen snap-center flex items-center justify-center bg-black">
+    <section className="balade-slide relative snap-center flex items-center justify-center bg-black">
       <motion.div
         layout
         initial={{ opacity: 0, y: 40, scale: 0.98 }}
@@ -121,9 +121,9 @@ function ArtworkSlide({
             title={artwork.title}
           />
 
-          {/* Overlay : infos artiste en haut, titre + description en bas */}
+          {/* Overlay : infos artiste en haut (safe area), titre + description en bas */}
           <div className="pointer-events-none absolute inset-0 flex flex-col">
-            <div className="flex items-start justify-between px-4 pt-4 sm:px-6">
+            <div className="safe-area-top flex items-start justify-between px-4 pt-4 sm:px-6 md:pt-4">
               <div className="pointer-events-auto inline-flex items-center gap-3 rounded-full bg-black/45 px-3 py-1.5 text-xs text-slate-200 backdrop-blur-2xl">
                 <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/40">
                   {artist?.avatarUrl ? (
@@ -154,8 +154,13 @@ function ArtworkSlide({
               </div>
             </div>
 
-            <div className="mt-auto px-4 pb-6 sm:px-6 sm:pb-8">
-              <div className="max-w-md rounded-3xl bg-gradient-to-t from-black/85 via-black/60 to-transparent p-3 sm:p-4">
+            {/* Titre + description en bas : dégradé 30 % + texte à ~80px du bas */}
+            <div className="pointer-events-auto absolute bottom-0 left-0 right-0">
+              <div
+                className="balade-gradient-bottom absolute inset-0 h-[30%] min-h-[120px]"
+                aria-hidden
+              />
+              <div className="relative px-4 pb-20 pt-3 sm:px-6 sm:pb-24 md:pb-8">
                 <h2 className="text-balance text-lg font-semibold text-slate-50 sm:text-xl md:text-2xl">
                   {artwork.title}
                 </h2>
@@ -992,7 +997,7 @@ function CatalogView({
 
 function BottomNav({ view, onChangeView }) {
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center pb-4">
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center safe-area-bottom">
       <div className="pointer-events-auto flex w-full max-w-xs items-center justify-between rounded-full bg-black/70 px-2.5 py-1.5 text-xs text-slate-200 backdrop-blur-2xl sm:max-w-sm">
         <button
           type="button"
@@ -1465,7 +1470,7 @@ export default function App() {
             onOpenArtworkDetail={handleOpenArtworkDetail}
           />
         ) : (
-          <div className="h-screen snap-y snap-mandatory overflow-y-scroll scroll-smooth">
+          <div className="balade-viewport snap-y snap-mandatory overflow-y-scroll scroll-smooth">
             <AnimatePresence mode="popLayout">
               {feed.map((artwork) => (
                 <ArtworkSlide
