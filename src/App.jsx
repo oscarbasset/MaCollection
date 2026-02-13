@@ -61,7 +61,7 @@ function formatSeconds(seconds) {
 function ArtworkMedia({ mediaType, mediaUrl, title }) {
   if (mediaType === 'video') {
     return (
-      <div className="relative w-full h-full overflow-hidden rounded-[32px] bg-black/80">
+      <div className="relative h-full w-full overflow-hidden bg-black/80">
         <video
           src={mediaUrl}
           className="h-full w-full object-cover opacity-90"
@@ -70,20 +70,20 @@ function ArtworkMedia({ mediaType, mediaUrl, title }) {
           muted
           playsInline
         />
-        <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-t from-black/55 via-transparent to-black/25" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-full overflow-hidden rounded-[32px] bg-black/80">
+    <div className="relative h-full w-full overflow-hidden bg-black/80">
       <img
         src={mediaUrl}
         alt={title}
         className="h-full w-full object-cover"
         loading="lazy"
       />
-      <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-t from-black/65 via-transparent to-black/25" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/25" />
     </div>
   );
 }
@@ -103,16 +103,16 @@ function ArtworkSlide({
   const displayedLikes = artwork.likes + (isLiked ? 1 : 0);
 
   return (
-    <section className="relative flex min-h-screen snap-start items-center justify-center px-3 py-4 sm:px-6 md:px-10">
+    <section className="relative h-screen snap-start">
       <motion.div
         layout
         initial={{ opacity: 0, y: 40, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -40, scale: 0.98 }}
         transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1] }}
-        className="relative flex h-full w-full max-w-4xl flex-col gap-4 rounded-[40px] bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-black/90 p-3 sm:p-4 md:p-6 shadow-xl"
+        className="relative flex h-full w-full flex-col bg-black"
       >
-        <div className="flex items-center justify-between gap-3 px-1 pt-1 text-xs uppercase tracking-[0.25em] text-slate-400">
+        <div className="flex items-center justify-between gap-3 px-3 pt-3 text-xs uppercase tracking-[0.25em] text-slate-400">
           <span className="pill bg-white/5 text-[0.6rem] sm:text-[0.65rem]">
             Balade
           </span>
@@ -1460,7 +1460,7 @@ export default function App() {
             onOpenArtworkDetail={handleOpenArtworkDetail}
           />
         ) : (
-          <div className="h-full snap-y snap-mandatory overflow-y-scroll scroll-smooth">
+          <div className="h-screen snap-y snap-mandatory overflow-y-scroll scroll-smooth">
             <AnimatePresence mode="popLayout">
               {feed.map((artwork) => (
                 <ArtworkSlide
