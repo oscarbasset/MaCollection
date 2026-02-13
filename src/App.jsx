@@ -154,13 +154,13 @@ function ArtworkSlide({
               </div>
             </div>
 
-            {/* Titre + description en bas : dégradé 30 % + texte à ~80px du bas */}
+            {/* Titre + description juste au-dessus de la bande noire, dégradé + 20px de marge */}
             <div className="pointer-events-auto absolute bottom-0 left-0 right-0">
               <div
                 className="balade-gradient-bottom absolute inset-0 h-[30%] min-h-[120px]"
                 aria-hidden
               />
-              <div className="relative px-4 pb-20 pt-3 sm:px-6 sm:pb-24 md:pb-8">
+              <div className="relative px-4 pb-5 pt-3 sm:px-6 md:pb-8">
                 <h2 className="text-balance text-lg font-semibold text-slate-50 sm:text-xl md:text-2xl">
                   {artwork.title}
                 </h2>
@@ -996,9 +996,20 @@ function CatalogView({
 }
 
 function BottomNav({ view, onChangeView }) {
+  const isImmersive = view === 'immersive';
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center safe-area-bottom">
-      <div className="pointer-events-auto flex w-full max-w-xs items-center justify-between rounded-full bg-black/70 px-2.5 py-1.5 text-xs text-slate-200 backdrop-blur-2xl sm:max-w-sm">
+    <nav
+      className={
+        isImmersive
+          ? 'pointer-events-none flex flex-shrink-0 items-center justify-center bg-black balade-nav-bar z-30'
+          : 'pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center safe-area-bottom'
+      }
+    >
+      <div
+        className={`pointer-events-auto flex w-full max-w-xs items-center justify-between rounded-full px-2.5 py-1.5 text-xs text-slate-200 sm:max-w-sm ${
+          isImmersive ? 'bg-slate-900/95' : 'bg-black/70 backdrop-blur-2xl'
+        }`}
+      >
         <button
           type="button"
           onClick={() => onChangeView('catalog')}
@@ -1427,7 +1438,11 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-black via-mc-bg to-black">
+    <div
+      className={`flex flex-col bg-gradient-to-b from-black via-mc-bg to-black ${
+        view === 'immersive' ? 'min-h-[100dvh]' : 'min-h-screen'
+      }`}
+    >
       {!(role === 'visitor' && view === 'immersive' && immersiveView.mode === 'feed') && (
         <header className="pointer-events-none fixed inset-x-0 top-0 z-20 flex justify-center pt-3">
           <div className="pointer-events-auto flex w-full max-w-4xl items-center justify-between px-4 sm:px-6 md:px-8">
@@ -1457,7 +1472,7 @@ export default function App() {
         className={
           view === 'catalog'
             ? 'relative flex-1 pt-16 pb-20'
-            : 'relative flex-1 pb-20'
+            : 'flex-1 min-h-0 flex flex-col'
         }
       >
         {view === 'catalog' ? (
@@ -1470,7 +1485,7 @@ export default function App() {
             onOpenArtworkDetail={handleOpenArtworkDetail}
           />
         ) : (
-          <div className="balade-viewport snap-y snap-mandatory overflow-y-scroll scroll-smooth">
+          <div className="flex-1 min-h-0 overflow-y-scroll snap-y snap-mandatory scroll-smooth bg-black">
             <AnimatePresence mode="popLayout">
               {feed.map((artwork) => (
                 <ArtworkSlide

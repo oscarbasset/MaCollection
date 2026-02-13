@@ -24,15 +24,10 @@
     @apply rounded-full px-3 py-1 text-xs font-medium uppercase tracking-widest;
   }
 
-  /* Mode Balade mobile : hauteur dynamique et safe areas */
-  .balade-viewport {
-    height: 100dvh;
-    min-height: 100dvh;
-  }
-
+  /* Mode Balade : slide remplit la zone contenu (au-dessus de la barre noire) */
   .balade-slide {
-    height: 100dvh;
-    min-height: 100dvh;
+    min-height: 100%;
+    height: 100%;
   }
 
   .safe-area-top {
@@ -41,6 +36,12 @@
 
   .safe-area-bottom {
     padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+  /* Barre de navigation Mode Balade : hauteur fixe, safe area iPhone */
+  .balade-nav-bar {
+    min-height: 72px;
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
   }
 
   /* Dégradé bas d’image pour lisibilité du texte (≈ 30 % hauteur) */
