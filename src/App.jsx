@@ -349,18 +349,18 @@ function ArtistProfileView({ artistId, onBackToFeed }) {
 }
 
 function LoginView({ artistsList, initialArtistId, onLogin, onBackToVisitor }) {
-  const [selectedArtistId, setSelectedArtistId] = useState(
-    initialArtistId ?? artistsList[0]?.id ?? '',
-  );
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (!selectedArtistId) return;
-    onLogin(selectedArtistId);
+    // Simulation : connexion réussie quel que soit l'identifiant (pour tests)
+    const artistId = initialArtistId ?? artistsList[0]?.id ?? '';
+    if (artistId) onLogin(artistId);
   };
 
   return (
-    <div className="w-full max-w-md rounded-3xl bg-slate-900/70 p-6 shadow-soft-xl">
+    <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-6 shadow-soft-xl">
       <div className="mb-5 space-y-2 text-center">
         <p className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
           Espace exposant
@@ -375,18 +375,24 @@ function LoginView({ artistsList, initialArtistId, onLogin, onBackToVisitor }) {
       </div>
       <form onSubmit={handleSubmit} className="space-y-4 text-sm text-slate-100">
         <label className="block text-xs text-slate-300">
-          Artiste
-          <select
-            value={selectedArtistId}
-            onChange={(event) => setSelectedArtistId(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
-          >
-            {artistsList.map((artist) => (
-              <option key={artist.id} value={artist.id}>
-                {artist.name}
-              </option>
-            ))}
-          </select>
+          E-mail
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="vous@exemple.com"
+            className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 outline-none ring-0 focus:border-emerald-400"
+          />
+        </label>
+        <label className="block text-xs text-slate-300">
+          Mot de passe
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="••••••••"
+            className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 outline-none ring-0 focus:border-emerald-400"
+          />
         </label>
         <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:justify-end">
           <button
@@ -398,9 +404,9 @@ function LoginView({ artistsList, initialArtistId, onLogin, onBackToVisitor }) {
           </button>
           <button
             type="submit"
-            className="flex h-9 items-center justify-center rounded-full bg-emerald-400/95 px-5 text-xs font-semibold text-emerald-950 shadow-soft-xl hover:bg-emerald-300"
+            className="flex h-9 items-center justify-center rounded-full bg-white px-5 text-xs font-semibold text-slate-900 shadow-soft-xl hover:bg-slate-100"
           >
-            Entrer dans le mode exposant
+            Se connecter
           </button>
         </div>
       </form>
@@ -582,22 +588,31 @@ function ExhibitorDashboard({
               />
             </label>
             <label className="block text-xs text-slate-300">
-              URL de photo de profil
+              Photo de profil
               <input
-                type="url"
-                value={localProfile.avatarUrl}
-                onChange={(event) =>
-                  setLocalProfile((prev) => ({
-                    ...prev,
-                    avatarUrl: event.target.value,
-                  }))
-                }
-                placeholder="https://…"
-                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () =>
+                    setLocalProfile((prev) => ({
+                      ...prev,
+                      avatarUrl: reader.result,
+                    }));
+                  reader.readAsDataURL(file);
+                }}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 file:mr-2 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-slate-100"
               />
+              {localProfile.avatarUrl && (
+                <p className="mt-1.5 text-[0.65rem] text-slate-500">
+                  Photo chargée (enregistrez pour conserver)
+                </p>
+              )}
             </label>
             <label className="block text-xs text-slate-300">
-              Texte de présentation
+              Bio / Description de l'artiste
               <textarea
                 rows={4}
                 value={localProfile.bio}
@@ -672,7 +687,7 @@ function ExhibitorDashboard({
         <section className="glass-panel mb-10 rounded-3xl p-4 text-sm text-slate-100">
           <div className="mb-3 flex items-center justify-between gap-3">
             <p className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
-              Ajouter une œuvre
+              Ajouter mes œuvres
             </p>
           </div>
           <form
@@ -695,22 +710,31 @@ function ExhibitorDashboard({
                 />
               </label>
               <label className="block text-xs text-slate-300">
-                URL de l’image
+                Image de l’œuvre
                 <input
-                  type="url"
-                  value={newArtwork.imageUrl}
-                  onChange={(event) =>
-                    setNewArtwork((prev) => ({
-                      ...prev,
-                      imageUrl: event.target.value,
-                    }))
-                  }
-                  placeholder="https://images.unsplash.com/…"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 outline-none ring-0 focus:border-emerald-400"
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () =>
+                      setNewArtwork((prev) => ({
+                        ...prev,
+                        imageUrl: reader.result,
+                      }));
+                    reader.readAsDataURL(file);
+                  }}
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-slate-100 file:mr-2 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-slate-100"
                 />
+                {newArtwork.imageUrl && (
+                  <p className="mt-1.5 text-[0.65rem] text-slate-500">
+                    Image chargée
+                  </p>
+                )}
               </label>
               <label className="block text-xs text-slate-300">
-                Description courte
+                Description courte (optionnel)
                 <textarea
                   rows={3}
                   value={newArtwork.description}
@@ -834,6 +858,8 @@ function CatalogView({
   onOpenOffer,
   onOpenArtistProfile,
   onOpenArtworkDetail,
+  onConnexionClick,
+  onDevenirExposantClick,
 }) {
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
@@ -870,6 +896,25 @@ function CatalogView({
     <div className="relative h-full overflow-y-auto">
       <div className="bg-gradient-to-b from-black/90 via-mc-bg/95 to-mc-bg px-4 pb-3 pt-2 sm:px-6 md:px-8">
         <div className="mx-auto w-full max-w-4xl space-y-3">
+          <header className="flex items-center justify-between gap-3 pb-2">
+            <div className="min-w-0 flex-1" />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onConnexionClick}
+                className="rounded-full border border-white/30 bg-transparent px-4 py-2 text-[0.7rem] font-medium text-slate-100 transition hover:border-white/50 hover:bg-white/5"
+              >
+                Connexion
+              </button>
+              <button
+                type="button"
+                onClick={onDevenirExposantClick}
+                className="rounded-full bg-white px-4 py-2 text-[0.7rem] font-semibold text-slate-900 shadow-soft-xl transition hover:bg-slate-100"
+              >
+                Devenir Exposant
+              </button>
+            </div>
+          </header>
           <div className="glass-panel flex items-center gap-2 rounded-2xl px-3 py-2.5 text-xs text-slate-100">
             <SearchIcon className="h-4 w-4 text-slate-300" />
             <input
@@ -1261,6 +1306,7 @@ export default function App() {
     artistId: null,
   });
   const [view, setView] = useState('catalog');
+  const [showConnexionModal, setShowConnexionModal] = useState(false);
 
   useEffect(() => {
     try {
@@ -1444,6 +1490,8 @@ export default function App() {
             onOpenOffer={handleOpenOffer}
             onOpenArtistProfile={handleOpenArtistProfile}
             onOpenArtworkDetail={handleOpenArtworkDetail}
+            onConnexionClick={() => setShowConnexionModal(true)}
+            onDevenirExposantClick={handleExhibitorAccessClick}
           />
         ) : (
           <div className="balade-scroll-container scroll-smooth bg-black">
@@ -1484,6 +1532,35 @@ export default function App() {
         artwork={activeOfferArtwork}
         onClose={() => setActiveOfferArtwork(null)}
       />
+
+      {showConnexionModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+          onClick={() => setShowConnexionModal(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setShowConnexionModal(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-900/95 p-6 shadow-soft-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-center text-sm font-medium text-slate-50">
+              Connexion
+            </p>
+            <p className="mt-2 text-center text-xs text-slate-400">
+              Fonctionnalité bientôt disponible.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowConnexionModal(false)}
+              className="mt-4 w-full rounded-full border border-white/20 py-2 text-xs font-medium text-slate-100 hover:bg-white/5"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
