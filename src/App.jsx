@@ -105,7 +105,7 @@ function ArtworkSlide({
   const displayedLikes = artwork.likes + (isLiked ? 1 : 0);
 
   return (
-    <section className="balade-slide relative snap-center flex items-center justify-center bg-black">
+    <section className="balade-slide relative flex items-center justify-center bg-black">
       <motion.div
         layout
         initial={{ opacity: 0, y: 40, scale: 0.98 }}
@@ -114,7 +114,8 @@ function ArtworkSlide({
         transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1] }}
         className="relative flex h-full w-full items-center justify-center"
       >
-        <div className="relative h-full w-full md:h-[90vh] md:w-auto md:aspect-[9/16]">
+        {/* Mobile: 100% largeur — Desktop: 9:16 centré, bandes noires à gauche/droite */}
+        <div className="relative h-full w-full md:h-full md:max-h-full md:w-auto md:aspect-[9/16]">
           <ArtworkMedia
             mediaType={artwork.mediaType}
             mediaUrl={artwork.mediaUrl}
@@ -154,17 +155,17 @@ function ArtworkSlide({
               </div>
             </div>
 
-            {/* Titre + description juste au-dessus de la bande noire, dégradé + 20px de marge */}
+            {/* Titre + description en overlay juste au-dessus de la bande noire, text-shadow pour lisibilité */}
             <div className="pointer-events-auto absolute bottom-0 left-0 right-0">
               <div
                 className="balade-gradient-bottom absolute inset-0 h-[30%] min-h-[120px]"
                 aria-hidden
               />
-              <div className="relative px-4 pb-5 pt-3 sm:px-6 md:pb-8">
-                <h2 className="text-balance text-lg font-semibold text-slate-50 sm:text-xl md:text-2xl">
+              <div className="relative px-4 pb-6 pt-3 sm:px-6 md:pb-8">
+                <h2 className="balade-overlay-text text-balance text-lg font-semibold text-slate-50 sm:text-xl md:text-2xl">
                   {artwork.title}
                 </h2>
-                <p className="mt-1 text-xs text-slate-200/95 sm:text-sm md:text-[0.95rem]">
+                <p className="balade-overlay-text mt-1 text-xs text-slate-200/95 sm:text-sm md:text-[0.95rem]">
                   {artwork.description}
                 </p>
               </div>
@@ -996,20 +997,9 @@ function CatalogView({
 }
 
 function BottomNav({ view, onChangeView }) {
-  const isImmersive = view === 'immersive';
   return (
-    <nav
-      className={
-        isImmersive
-          ? 'pointer-events-none flex flex-shrink-0 items-center justify-center bg-black balade-nav-bar z-30'
-          : 'pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center safe-area-bottom'
-      }
-    >
-      <div
-        className={`pointer-events-auto flex w-full max-w-xs items-center justify-between rounded-full px-2.5 py-1.5 text-xs text-slate-200 sm:max-w-sm ${
-          isImmersive ? 'bg-slate-900/95' : 'bg-black/70 backdrop-blur-2xl'
-        }`}
-      >
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex items-center justify-center bg-black balade-nav-bar">
+      <div className="pointer-events-auto flex w-full max-w-xs items-center justify-between rounded-full bg-slate-900/95 px-2.5 py-1.5 text-xs text-slate-200 sm:max-w-sm">
         <button
           type="button"
           onClick={() => onChangeView('catalog')}
@@ -1438,41 +1428,12 @@ export default function App() {
   }
 
   return (
-    <div
-      className={`flex flex-col bg-gradient-to-b from-black via-mc-bg to-black ${
-        view === 'immersive' ? 'min-h-[100dvh]' : 'min-h-screen'
-      }`}
-    >
-      {!(role === 'visitor' && view === 'immersive' && immersiveView.mode === 'feed') && (
-        <header className="pointer-events-none fixed inset-x-0 top-0 z-20 flex justify-center pt-3">
-          <div className="pointer-events-auto flex w-full max-w-4xl items-center justify-between px-4 sm:px-6 md:px-8">
-            <div className="inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-xs text-slate-100 backdrop-blur-2xl">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              <span className="uppercase tracking-[0.25em] text-[0.6rem]">
-                MaCollection
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="hidden text-[0.6rem] uppercase tracking-[0.25em] text-slate-400 sm:inline">
-                {view === 'catalog' ? 'Explorer' : 'Balade immersive'}
-              </span>
-              <button
-                type="button"
-                onClick={handleExhibitorAccessClick}
-                className="hidden rounded-full border border-white/20 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-slate-100 hover:bg-white/10 sm:inline-flex"
-              >
-                Accès exposant
-              </button>
-            </div>
-          </div>
-        </header>
-      )}
-
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-black via-mc-bg to-black">
       <main
         className={
           view === 'catalog'
-            ? 'relative flex-1 pt-16 pb-20'
-            : 'flex-1 min-h-0 flex flex-col'
+            ? 'relative flex-1 pb-24'
+            : 'relative flex-1 bg-black'
         }
       >
         {view === 'catalog' ? (
@@ -1485,7 +1446,7 @@ export default function App() {
             onOpenArtworkDetail={handleOpenArtworkDetail}
           />
         ) : (
-          <div className="flex-1 min-h-0 overflow-y-scroll snap-y snap-mandatory scroll-smooth bg-black">
+          <div className="balade-scroll-container scroll-smooth bg-black">
             <AnimatePresence mode="popLayout">
               {feed.map((artwork) => (
                 <ArtworkSlide
