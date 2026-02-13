@@ -80,8 +80,9 @@ function ArtworkMedia({ mediaType, mediaUrl, title }) {
       <img
         src={mediaUrl}
         alt={title}
-        className="h-full w-full object-cover"
-        loading="lazy"
+        className="h-full w-full"
+        style={{ objectFit: 'cover' }}
+        loading="eager"
         referrerPolicy="no-referrer"
       />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/25" />
@@ -794,7 +795,9 @@ function ExhibitorDashboard({
                       <img
                         src={artwork.mediaUrl}
                         alt={artwork.title}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full"
+                        style={{ objectFit: 'cover' }}
+                        loading="eager"
                         referrerPolicy="no-referrer"
                       />
                     </div>
@@ -911,8 +914,9 @@ function CatalogView({
                 <img
                   src={artwork.mediaUrl}
                   alt={artwork.title}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
+                  className="h-full w-full"
+                  style={{ objectFit: 'cover' }}
+                  loading="eager"
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/85 via-black/25 to-transparent p-2.5">
