@@ -168,7 +168,7 @@ export const artworks = [
     price: 2400,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?abstract-painting,art,texture',
     likes: 132,
     averageViewTime: 18,
     category: 'peinture',
@@ -198,7 +198,7 @@ export const artworks = [
     price: 1800,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?abstract-painting,art,texture',
     likes: 98,
     averageViewTime: 15,
     category: 'style',
@@ -213,7 +213,7 @@ export const artworks = [
     price: 2600,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1526481280695-3c687fd543c0?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?contemporary-art,glitch,neon',
     likes: 176,
     averageViewTime: 21,
     category: 'style',
@@ -228,7 +228,7 @@ export const artworks = [
     price: 5400,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1505842679540-5a1c49f0cde2?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?abstract-architecture,concrete,art',
     likes: 256,
     averageViewTime: 34,
     category: 'peinture',
@@ -243,7 +243,7 @@ export const artworks = [
     price: 3100,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?desert,painting,texture',
     likes: 143,
     averageViewTime: 22,
     category: 'peinture',
@@ -273,7 +273,7 @@ export const artworks = [
     price: 4800,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1526481280693-3b113a42129b?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?modern-sculpture,concrete,art',
     likes: 211,
     averageViewTime: 26,
     category: 'sculpture',
@@ -303,7 +303,7 @@ export const artworks = [
     price: 2600,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1515165562835-c4c9e0737eaa?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?train,cinematic,photography',
     likes: 134,
     averageViewTime: 24,
     category: 'objet',
@@ -318,7 +318,7 @@ export const artworks = [
     price: 2950,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1518300670681-9fd99daedf98?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?night,train,film',
     likes: 120,
     averageViewTime: 19,
     category: 'objet',
@@ -333,7 +333,7 @@ export const artworks = [
     price: 3200,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?harbor,night,lights',
     likes: 178,
     averageViewTime: 28,
     category: 'style',
@@ -348,7 +348,7 @@ export const artworks = [
     price: 3500,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?city,lights,painting',
     likes: 203,
     averageViewTime: 25,
     category: 'peinture',
@@ -363,7 +363,7 @@ export const artworks = [
     price: 4100,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?abstract-painting,texture,canvas',
     likes: 145,
     averageViewTime: 23,
     category: 'peinture',
@@ -378,7 +378,7 @@ export const artworks = [
     price: 3800,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1519710164239-5ac8a301cdf0?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?blue,abstract,painting',
     likes: 122,
     averageViewTime: 20,
     category: 'peinture',
@@ -393,7 +393,7 @@ export const artworks = [
     price: 4400,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1526481280694-3b113a42129b?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?industrial,abstract,painting',
     likes: 167,
     averageViewTime: 27,
     category: 'peinture',
@@ -408,7 +408,7 @@ export const artworks = [
     price: 6900,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?concrete,sculpture,minimal',
     likes: 211,
     averageViewTime: 32,
     category: 'sculpture',
@@ -423,7 +423,7 @@ export const artworks = [
     price: 7200,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1545235617-9465c4b8baad?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?modern-sculpture,concrete,light',
     likes: 189,
     averageViewTime: 30,
     category: 'sculpture',
@@ -438,7 +438,7 @@ export const artworks = [
     price: 3500,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?rust,metal,art',
     likes: 132,
     averageViewTime: 21,
     category: 'objet',
@@ -453,7 +453,7 @@ export const artworks = [
     price: 3300,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?metal,grid,minimal',
     likes: 118,
     averageViewTime: 19,
     category: 'objet',
@@ -468,7 +468,7 @@ export const artworks = [
     price: 1900,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?artist-studio,painting,tools',
     likes: 167,
     averageViewTime: 24,
     category: 'objet',
@@ -483,7 +483,7 @@ export const artworks = [
     price: 2100,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?canvas,studio,art',
     likes: 138,
     averageViewTime: 22,
     category: 'style',
@@ -498,7 +498,7 @@ export const artworks = [
     price: 2300,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1438109491414-7198515b166b?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?window,sculpture,blur',
     likes: 125,
     averageViewTime: 20,
     category: 'style',
@@ -513,7 +513,7 @@ export const artworks = [
     price: 2600,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?gallery,night,neon',
     likes: 179,
     averageViewTime: 26,
     category: 'style',
@@ -528,7 +528,7 @@ export const artworks = [
     price: 5100,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?neon,installation,light',
     likes: 214,
     averageViewTime: 33,
     category: 'objet',
@@ -543,7 +543,7 @@ export const artworks = [
     price: 4800,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?light-installation,cables,art',
     likes: 192,
     averageViewTime: 30,
     category: 'objet',
@@ -558,7 +558,7 @@ export const artworks = [
     price: 2700,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?chair,light,art',
     likes: 163,
     averageViewTime: 23,
     category: 'objet',
@@ -573,7 +573,7 @@ export const artworks = [
     price: 2500,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?still-life,objects,table',
     likes: 149,
     averageViewTime: 21,
     category: 'objet',
@@ -588,7 +588,7 @@ export const artworks = [
     price: 3000,
     mediaType: 'image',
     mediaUrl:
-      'https://images.unsplash.com/photo-1487412912498-0447578fcca8?auto=format&fit=crop&w=1200&q=80',
+      'https://source.unsplash.com/1200x1800/?light,shadow,installation',
     likes: 171,
     averageViewTime: 24,
     category: 'style',
