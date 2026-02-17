@@ -1302,20 +1302,47 @@ function OfferModal({ artwork, onClose }) {
   );
 }
 
+const BUCKET_ARTWORKS = 'artworks';
+
+async function uploadArtworkImage(supabaseClient, userId, file) {
+  const safeName = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+  const filePath = `${userId}/${Date.now()}-${safeName}`;
+
+  const { error: uploadError } = await supabaseClient.storage
+    .from(BUCKET_ARTWORKS)
+    .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+  if (uploadError) throw uploadError;
+
+  const { data: urlData } = supabaseClient.storage
+    .from(BUCKET_ARTWORKS)
+    .getPublicUrl(filePath);
+
+  return urlData.publicUrl;
+}
+
 function AddArtworkModal({ user, onClose, onSuccess }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [imageDataUrl, setImageDataUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setImageDataUrl(reader.result);
-    reader.readAsDataURL(file);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
+
+  // Libérer l’URL de prévisualisation au démontage ou changement de fichier
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1324,14 +1351,20 @@ function AddArtworkModal({ user, onClose, onSuccess }) {
       setError('Le titre est requis.');
       return;
     }
+    if (!selectedFile) {
+      setError('Veuillez sélectionner une image.');
+      return;
+    }
     setLoading(true);
     try {
+      const imageUrl = await uploadArtworkImage(supabase, user.id, selectedFile);
+
       const { data, error: insertError } = await supabase
         .from('artworks')
         .insert({
           title: title.trim(),
           description: description.trim() || null,
-          image_url: imageDataUrl || null,
+          image_url: imageUrl,
           user_id: user.id,
         })
         .select('id, created_at, title, description, image_url, user_id')
@@ -1410,8 +1443,17 @@ function AddArtworkModal({ user, onClose, onSuccess }) {
               onChange={handleImageChange}
               className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white file:mr-2 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-slate-100"
             />
-            {imageDataUrl && (
-              <p className="mt-1.5 text-[0.65rem] text-emerald-400">Image chargée</p>
+            {previewUrl && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                <img
+                  src={previewUrl}
+                  alt="Aperçu"
+                  className="h-40 w-full object-contain"
+                />
+                <p className="p-2 text-center text-[0.65rem] text-emerald-400">
+                  Aperçu — l’image sera envoyée au bucket au moment de la validation
+                </p>
+              </div>
             )}
           </label>
           {error && <p className="text-xs text-rose-400">{error}</p>}
