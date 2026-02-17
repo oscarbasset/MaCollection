@@ -349,6 +349,182 @@ function ArtistProfileView({ artistId, onBackToFeed }) {
   );
 }
 
+function MonEspaceView({ user, onBack, onEdit }) {
+  const [profile, setProfile] = useState(null);
+  const [collections, setCollections] = useState([]);
+  const [userArtworks, setUserArtworks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [profileRes, collectionsRes, artworksRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+        supabase.from('collections').select('id, name, description').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('artworks').select('id, title, description, image_url, collection_id').eq('user_id', user.id).order('created_at', { ascending: false }),
+      ]);
+      if (cancelled) return;
+      setProfile(profileRes.data ?? null);
+      setCollections(Array.isArray(collectionsRes.data) ? collectionsRes.data : []);
+      const raw = Array.isArray(artworksRes.data) ? artworksRes.data : [];
+      setUserArtworks(raw.map((row) => ({
+        id: row.id,
+        title: row.title ?? '',
+        description: row.description ?? '',
+        mediaType: 'image',
+        mediaUrl: row.image_url ?? '',
+        price: 0,
+        averageViewTime: 0,
+        collectionId: row.collection_id ?? null,
+      })));
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [user.id]);
+
+  const collectionsWithArtworks = useMemo(() => {
+    return collections.map((col) => ({
+      collection: col,
+      artworks: userArtworks.filter((a) => a.collectionId === col.id),
+    })).filter((g) => g.artworks.length > 0);
+  }, [collections, userArtworks]);
+
+  const artworksWithoutCollection = useMemo(
+    () => userArtworks.filter((a) => !a.collectionId),
+    [userArtworks],
+  );
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black">
+        <p className="text-slate-400">Chargement…</p>
+      </div>
+    );
+  }
+
+  const displayName = profile ? [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() || 'Mon espace' : 'Mon espace';
+  const description = profile?.description ?? '';
+
+  return (
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-black via-mc-bg to-black px-3 py-4 sm:px-6 md:px-10">
+      <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 pb-4 pt-2">
+        <button
+          type="button"
+          onClick={onBack}
+          className="glass-panel inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs text-slate-100"
+        >
+          <X className="h-3.5 w-3.5" />
+          <span className="uppercase tracking-[0.18em]">Catalogue</span>
+        </button>
+        <span className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">
+          Mon espace
+        </span>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 pb-6">
+        <section className="glass-panel flex flex-col gap-4 rounded-[32px] p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 overflow-hidden rounded-[24px] border border-white/20 bg-black/50 sm:h-20 sm:w-20 flex items-center justify-center">
+              <User2 className="h-8 w-8 text-slate-400 sm:h-10 sm:w-10" />
+            </div>
+            <div className="space-y-1 flex-1">
+              <h1 className="text-lg font-semibold text-slate-50 sm:text-xl">
+                {displayName}
+              </h1>
+              {description && (
+                <p className="text-xs text-slate-300 sm:text-sm">
+                  {description}
+                </p>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onEdit}
+            className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-slate-100 hover:bg-white/10 shrink-0"
+          >
+            Modifier mon profil
+          </button>
+        </section>
+
+        <section className="space-y-5 pb-12">
+          {collectionsWithArtworks.map(({ collection, artworks: colArtworks }) => (
+            <div
+              key={collection.id}
+              className="space-y-3 rounded-[28px] bg-black/40 p-3 sm:p-4 md:p-5"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold text-slate-50 sm:text-base">
+                    {collection.name}
+                  </h2>
+                  {collection.description && (
+                    <p className="text-[0.7rem] leading-relaxed text-slate-300 sm:text-xs">
+                      {collection.description}
+                    </p>
+                  )}
+                </div>
+                <span className="pill bg-white/5 text-[0.6rem] text-slate-200">
+                  {colArtworks.length} œuvre
+                  {colArtworks.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
+                {colArtworks.map((artwork) => (
+                  <div
+                    key={artwork.id}
+                    className="group relative overflow-hidden rounded-2xl bg-black/60"
+                  >
+                    <ArtworkMedia
+                      mediaType={artwork.mediaType}
+                      mediaUrl={artwork.mediaUrl}
+                      title={artwork.title}
+                    />
+                    <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2">
+                      <p className="line-clamp-2 text-[0.65rem] font-medium text-slate-50">
+                        {artwork.title}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          {artworksWithoutCollection.length > 0 && (
+            <div className="space-y-3 rounded-[28px] bg-black/40 p-3 sm:p-4 md:p-5">
+              <h2 className="text-sm font-semibold text-slate-50 sm:text-base">
+                Sans collection
+              </h2>
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
+                {artworksWithoutCollection.map((artwork) => (
+                  <div
+                    key={artwork.id}
+                    className="group relative overflow-hidden rounded-2xl bg-black/60"
+                  >
+                    <ArtworkMedia
+                      mediaType={artwork.mediaType}
+                      mediaUrl={artwork.mediaUrl}
+                      title={artwork.title}
+                    />
+                    <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2">
+                      <p className="line-clamp-2 text-[0.65rem] font-medium text-slate-50">
+                        {artwork.title}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {collectionsWithArtworks.length === 0 && artworksWithoutCollection.length === 0 && (
+            <p className="text-sm text-slate-400">Aucune œuvre publiée pour l’instant.</p>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+}
+
 function LoginView({ artistsList, initialArtistId, onLogin, onBackToVisitor }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -864,6 +1040,8 @@ function CatalogView({
   onSinscrireClick,
   onDevenirExposantClick,
   onSignOut,
+  hasExposantProfile,
+  onMonEspaceClick,
 }) {
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
@@ -922,6 +1100,15 @@ function CatalogView({
               )}
             </div>
             <div className="flex items-center gap-2">
+              {user && hasExposantProfile && onMonEspaceClick && (
+                <button
+                  type="button"
+                  onClick={onMonEspaceClick}
+                  className="rounded-full border border-white/30 bg-transparent px-4 py-2 text-[0.7rem] font-medium text-slate-100 transition hover:border-white/50 hover:bg-white/5"
+                >
+                  Mon Espace
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onDevenirExposantClick}
@@ -1847,6 +2034,8 @@ export default function App() {
   const [pendingExposant, setPendingExposant] = useState(false);
   const [showAddArtworkModal, setShowAddArtworkModal] = useState(false);
   const [exposantView, setExposantView] = useState(null);
+  const [exposantProfile, setExposantProfile] = useState(null);
+  const [showMonEspaceView, setShowMonEspaceView] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1857,6 +2046,18 @@ export default function App() {
     });
     return () => subscription?.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      setExposantProfile(null);
+      return;
+    }
+    supabase.from('profiles').select('id, first_name, last_name, description').eq('id', user.id).maybeSingle().then(({ data }) => {
+      if (!cancelled) setExposantProfile(data ?? null);
+    });
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   const openExposantSpace = React.useCallback(async () => {
     if (!user) return;
@@ -2122,6 +2323,19 @@ export default function App() {
     );
   }
 
+  if (showMonEspaceView && user) {
+    return (
+      <MonEspaceView
+        user={user}
+        onBack={() => setShowMonEspaceView(false)}
+        onEdit={() => {
+          setShowMonEspaceView(false);
+          setExposantView('dashboard');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-black via-mc-bg to-black">
       <main
@@ -2144,6 +2358,8 @@ export default function App() {
             onSinscrireClick={() => setShowAuthModal(true)}
             onDevenirExposantClick={handleDevenirExposantClick}
             onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
+            hasExposantProfile={!!exposantProfile}
+            onMonEspaceClick={() => setShowMonEspaceView(true)}
           />
         ) : (
           <div className="balade-scroll-container scroll-smooth bg-black">
