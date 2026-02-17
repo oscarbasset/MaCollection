@@ -859,7 +859,9 @@ function CatalogView({
   onOpenOffer,
   onOpenArtistProfile,
   onOpenArtworkDetail,
+  user,
   onConnexionClick,
+  onSinscrireClick,
   onDevenirExposantClick,
   onSignOut,
 }) {
@@ -899,15 +901,27 @@ function CatalogView({
       <div className="bg-gradient-to-b from-black/90 via-mc-bg/95 to-mc-bg px-4 pb-3 pt-2 sm:px-6 md:px-8">
         <div className="mx-auto w-full max-w-4xl space-y-3">
           <header className="flex items-center justify-between gap-3 pb-2">
-            <div className="min-w-0 flex-1" />
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onConnexionClick}
-                className="rounded-full border border-white/30 bg-transparent px-4 py-2 text-[0.7rem] font-medium text-slate-100 transition hover:border-white/50 hover:bg-white/5"
-              >
-                Connexion
-              </button>
+              {!user && (
+                <>
+                  <button
+                    type="button"
+                    onClick={onConnexionClick}
+                    className="rounded-full border border-white/30 bg-transparent px-4 py-2 text-[0.7rem] font-medium text-slate-100 transition hover:border-white/50 hover:bg-white/5"
+                  >
+                    Se connecter
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onSinscrireClick}
+                    className="rounded-full border border-white/30 bg-transparent px-4 py-2 text-[0.7rem] font-medium text-slate-100 transition hover:border-white/50 hover:bg-white/5"
+                  >
+                    S'inscrire
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={onDevenirExposantClick}
@@ -915,7 +929,7 @@ function CatalogView({
               >
                 Devenir Exposant
               </button>
-              {onSignOut && (
+              {user && onSignOut && (
                 <button
                   type="button"
                   onClick={onSignOut}
@@ -1288,6 +1302,141 @@ function OfferModal({ artwork, onClose }) {
   );
 }
 
+function AddArtworkModal({ user, onClose, onSuccess }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageDataUrl, setImageDataUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setImageDataUrl(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!title.trim()) {
+      setError('Le titre est requis.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error: insertError } = await supabase
+        .from('artworks')
+        .insert({
+          title: title.trim(),
+          description: description.trim() || null,
+          image_url: imageDataUrl || null,
+          user_id: user.id,
+        })
+        .select('id, created_at, title, description, image_url, user_id')
+        .single();
+      if (insertError) throw insertError;
+      const defaultArtistId = artists[0]?.id ?? 'artist-lina-moreau';
+      onSuccess({
+        id: data.id,
+        artistId: defaultArtistId,
+        collectionId: null,
+        title: data.title ?? '',
+        description: data.description ?? '',
+        price: 0,
+        mediaType: 'image',
+        mediaUrl: data.image_url ?? '',
+        likes: 0,
+        averageViewTime: 0,
+        category: 'peinture',
+      });
+    } catch (err) {
+      setError(err?.message ?? 'Erreur lors de l\'ajout.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/95 p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white">Ajouter une œuvre</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-300 hover:bg-white/10"
+            aria-label="Fermer"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block text-xs text-slate-300">
+            Titre
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+              placeholder="Titre de l'œuvre"
+            />
+          </label>
+          <label className="block text-xs text-slate-300">
+            Description
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+              placeholder="Description (optionnel)"
+            />
+          </label>
+          <label className="block text-xs text-slate-300">
+            Image
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white file:mr-2 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-slate-100"
+            />
+            {imageDataUrl && (
+              <p className="mt-1.5 text-[0.65rem] text-emerald-400">Image chargée</p>
+            )}
+          </label>
+          {error && <p className="text-xs text-rose-400">{error}</p>}
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-white/20 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-white/5"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100 disabled:opacity-50"
+            >
+              {loading ? 'Envoi…' : 'Ajouter l\'œuvre'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function AuthScreen({ onAuthenticated }) {
   const [mode, setMode] = useState('signup');
   const [email, setEmail] = useState('');
@@ -1390,13 +1539,18 @@ export default function App() {
   });
   const [exhibitorCollections, setExhibitorCollections] = useState([]);
   const [userArtworks, setUserArtworks] = useState([]);
+  const [artworksFromSupabase, setArtworksFromSupabase] = useState([]);
 
   const allArtworks = useMemo(
-    () => [...artworks, ...userArtworks],
-    [userArtworks],
+    () => [
+      ...(Array.isArray(artworks) ? artworks : []),
+      ...(Array.isArray(artworksFromSupabase) ? artworksFromSupabase : []),
+      ...(Array.isArray(userArtworks) ? userArtworks : []),
+    ],
+    [artworksFromSupabase, userArtworks],
   );
 
-  const [feed, setFeed] = useState(artworks);
+  const [feed, setFeed] = useState([]);
   const [likedById, setLikedById] = useState({});
   const [activeOfferArtwork, setActiveOfferArtwork] = useState(null);
   const [activeDetailArtwork, setActiveDetailArtwork] = useState(null);
@@ -1405,7 +1559,9 @@ export default function App() {
     artistId: null,
   });
   const [view, setView] = useState('catalog');
-  const [showConnexionModal, setShowConnexionModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingExposant, setPendingExposant] = useState(false);
+  const [showAddArtworkModal, setShowAddArtworkModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1415,6 +1571,47 @@ export default function App() {
       setUser(session?.user ?? null);
     });
     return () => subscription?.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    supabase
+      .from('artworks')
+      .select('id, created_at, title, description, image_url, user_id')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.warn('Supabase artworks:', error.message);
+          setArtworksFromSupabase([]);
+          return;
+        }
+        const defaultArtistId = artists[0]?.id ?? 'artist-lina-moreau';
+        const raw = Array.isArray(data) ? data : [];
+        const mapped = raw.map((row) => ({
+          id: row.id,
+          artistId: defaultArtistId,
+          collectionId: null,
+          title: row.title ?? '',
+          description: row.description ?? '',
+          price: 0,
+          mediaType: 'image',
+          mediaUrl: row.image_url ?? '',
+          likes: 0,
+          averageViewTime: 0,
+          category: 'peinture',
+        }));
+        setArtworksFromSupabase(mapped);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.warn('Supabase artworks:', err?.message);
+          setArtworksFromSupabase([]);
+        }
+      });
+
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -1513,6 +1710,15 @@ export default function App() {
     setActiveDetailArtwork(artwork);
   };
 
+  const handleDevenirExposantClick = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      setPendingExposant(true);
+    } else {
+      setShowAddArtworkModal(true);
+    }
+  };
+
   const handleExhibitorAccessClick = () => {
     setRole('exhibitor');
   };
@@ -1530,10 +1736,6 @@ export default function App() {
       exhibitorProfile.avatarUrl || effectiveExhibitorBaseArtist?.avatarUrl || '',
     bio: exhibitorProfile.bio || effectiveExhibitorBaseArtist?.bio || '',
   };
-
-  if (!user) {
-    return <AuthScreen onAuthenticated={() => {}} />;
-  }
 
   if (role === 'exhibitor') {
     if (!isExhibitorAuthenticated) {
@@ -1603,8 +1805,10 @@ export default function App() {
             onOpenOffer={handleOpenOffer}
             onOpenArtistProfile={handleOpenArtistProfile}
             onOpenArtworkDetail={handleOpenArtworkDetail}
-            onConnexionClick={() => setShowConnexionModal(true)}
-            onDevenirExposantClick={handleExhibitorAccessClick}
+            user={user}
+            onConnexionClick={() => setShowAuthModal(true)}
+            onSinscrireClick={() => setShowAuthModal(true)}
+            onDevenirExposantClick={handleDevenirExposantClick}
             onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
           />
         ) : (
@@ -1647,33 +1851,46 @@ export default function App() {
         onClose={() => setActiveOfferArtwork(null)}
       />
 
-      {showConnexionModal && (
+      {showAuthModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
-          onClick={() => setShowConnexionModal(false)}
-          onKeyDown={(e) => e.key === 'Escape' && setShowConnexionModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
         >
-          <div
-            className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-900/95 p-6 shadow-soft-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-center text-sm font-medium text-slate-50">
-              Connexion
-            </p>
-            <p className="mt-2 text-center text-xs text-slate-400">
-              Fonctionnalité bientôt disponible.
-            </p>
+          <div className="relative w-full max-w-sm">
+            <AuthScreen
+              onAuthenticated={() => {
+                setShowAuthModal(false);
+                if (pendingExposant) {
+                  setPendingExposant(false);
+                  setShowAddArtworkModal(true);
+                }
+              }}
+            />
             <button
               type="button"
-              onClick={() => setShowConnexionModal(false)}
-              className="mt-4 w-full rounded-full border border-white/20 py-2 text-xs font-medium text-slate-100 hover:bg-white/5"
+              onClick={() => {
+                setShowAuthModal(false);
+                setPendingExposant(false);
+              }}
+              className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700"
+              aria-label="Fermer"
             >
-              Fermer
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
+      )}
+
+      {showAddArtworkModal && user && (
+        <AddArtworkModal
+          user={user}
+          onClose={() => setShowAddArtworkModal(false)}
+          onSuccess={(newArtwork) => {
+            setArtworksFromSupabase((prev) => [newArtwork, ...prev]);
+            setShowAddArtworkModal(false);
+          }}
+        />
       )}
     </div>
   );
