@@ -1007,7 +1007,7 @@ function CatalogView({
                   <div className="flex items-end justify-between gap-1 text-[0.6rem] text-slate-300">
                     <div className="flex flex-col gap-0.5">
                       <span className="line-clamp-1">
-                        {artist?.name ?? 'Artiste anonyme'}
+                        {artwork.artistDisplayName ?? artist?.name ?? 'Artiste'}
                       </span>
                       <span className="inline-flex items-center gap-1 text-[0.55rem] text-slate-400">
                         <span className="h-1.5 w-1.5 rounded-full bg-slate-200/70" />
@@ -1302,6 +1302,218 @@ function OfferModal({ artwork, onClose }) {
   );
 }
 
+function CreateProfileForm({ user, onSuccess, onBack }) {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('Nom et prénom sont requis.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error: upsertError } = await supabase.from('profiles').upsert(
+        {
+          id: user.id,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          description: description.trim() || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
+      if (upsertError) throw upsertError;
+      onSuccess?.();
+    } catch (err) {
+      setError(err?.message ?? 'Erreur lors de l\'enregistrement.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/95 p-6 shadow-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white">Créer mon profil artiste</h2>
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-300 hover:bg-white/10"
+            aria-label="Fermer"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block text-xs text-slate-300">
+            Prénom
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+              placeholder="Prénom"
+            />
+          </label>
+          <label className="block text-xs text-slate-300">
+            Nom
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+              placeholder="Nom"
+            />
+          </label>
+          <label className="block text-xs text-slate-300">
+            Description / Bio
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+              placeholder="Présentez votre travail (optionnel)"
+            />
+          </label>
+          {error && <p className="text-xs text-rose-400">{error}</p>}
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={onBack} className="rounded-full border border-white/20 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-white/5">
+              Retour
+            </button>
+            <button type="submit" disabled={loading} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100 disabled:opacity-50">
+              {loading ? 'Enregistrement…' : 'Créer mon profil'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ExposantDashboardView({ user, onBack, onAddArtworkSuccess }) {
+  const [profile, setProfile] = useState(null);
+  const [collections, setCollections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newCollectionName, setNewCollectionName] = useState('');
+  const [addingCollection, setAddingCollection] = useState(false);
+  const [showAddArtwork, setShowAddArtwork] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      const [profileRes, collectionsRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+        supabase.from('collections').select('id, created_at, name, description, user_id').eq('user_id', user.id).order('created_at', { ascending: false }),
+      ]);
+      if (cancelled) return;
+      if (profileRes.data) setProfile(profileRes.data);
+      setCollections(Array.isArray(collectionsRes.data) ? collectionsRes.data : []);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [user.id]);
+
+  const refreshCollections = async () => {
+    const { data } = await supabase.from('collections').select('id, created_at, name, description, user_id').eq('user_id', user.id).order('created_at', { ascending: false });
+    setCollections(Array.isArray(data) ? data : []);
+  };
+
+  const handleCreateCollection = async (e) => {
+    e.preventDefault();
+    if (!newCollectionName.trim()) return;
+    setAddingCollection(true);
+    try {
+      await supabase.from('collections').insert({ name: newCollectionName.trim(), user_id: user.id });
+      setNewCollectionName('');
+      await refreshCollections();
+    } finally {
+      setAddingCollection(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
+        <p className="text-slate-400">Chargement…</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-slate-950">
+      <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3">
+        <h1 className="text-lg font-semibold text-white">Tableau de bord</h1>
+        <button type="button" onClick={onBack} className="rounded-full border border-white/20 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-white/5">
+          Retour au catalogue
+        </button>
+      </header>
+      <main className="flex-1 p-4 space-y-6">
+        <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
+          <h2 className="text-sm font-semibold text-white mb-2">Mes collections</h2>
+          {collections.length === 0 ? (
+            <p className="text-xs text-slate-400">Aucune collection pour l’instant. Créez-en une ci-dessous.</p>
+          ) : (
+            <ul className="space-y-2">
+              {collections.map((c) => (
+                <li key={c.id} className="rounded-xl bg-black/30 px-3 py-2 text-sm text-slate-200">
+                  {c.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
+          <h2 className="text-sm font-semibold text-white mb-3">Créer une collection</h2>
+          <form onSubmit={handleCreateCollection} className="flex gap-2">
+            <input
+              type="text"
+              value={newCollectionName}
+              onChange={(e) => setNewCollectionName(e.target.value)}
+              placeholder="Nom de la collection"
+              className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+            />
+            <button type="submit" disabled={addingCollection || !newCollectionName.trim()} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100 disabled:opacity-50 shrink-0">
+              {addingCollection ? '…' : 'Créer'}
+            </button>
+          </form>
+        </section>
+        <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
+          <h2 className="text-sm font-semibold text-white mb-2">Ajouter une œuvre</h2>
+          {collections.length === 0 ? (
+            <p className="text-xs text-slate-400 mb-3">Créez d’abord au moins une collection ci-dessus, puis vous pourrez ajouter des œuvres.</p>
+          ) : (
+            <button type="button" onClick={() => setShowAddArtwork(true)} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100">
+              Ajouter une œuvre
+            </button>
+          )}
+        </section>
+      </main>
+      {showAddArtwork && collections.length > 0 && (
+        <AddArtworkModal
+          user={user}
+          profile={profile}
+          collections={collections}
+          onClose={() => setShowAddArtwork(false)}
+          onSuccess={(newArtwork) => {
+            onAddArtworkSuccess?.(newArtwork);
+            setShowAddArtwork(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 const BUCKET_ARTWORKS = 'artworks';
 
 async function uploadArtworkImage(supabaseClient, userId, file) {
@@ -1321,13 +1533,18 @@ async function uploadArtworkImage(supabaseClient, userId, file) {
   return urlData.publicUrl;
 }
 
-function AddArtworkModal({ user, onClose, onSuccess }) {
+function AddArtworkModal({ user, profile, collections = [], onClose, onSuccess }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [collectionId, setCollectionId] = useState(collections[0]?.id ?? '');
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (collections.length > 0 && !collectionId) setCollectionId(collections[0].id);
+  }, [collections, collectionId]);
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -1355,6 +1572,10 @@ function AddArtworkModal({ user, onClose, onSuccess }) {
       setError('Veuillez sélectionner une image.');
       return;
     }
+    if (collections.length > 0 && !collectionId) {
+      setError('Veuillez choisir une collection.');
+      return;
+    }
     setLoading(true);
     try {
       const imageUrl = await uploadArtworkImage(supabase, user.id, selectedFile);
@@ -1366,15 +1587,19 @@ function AddArtworkModal({ user, onClose, onSuccess }) {
           description: description.trim() || null,
           image_url: imageUrl,
           user_id: user.id,
+          collection_id: collectionId || null,
         })
-        .select('id, created_at, title, description, image_url, user_id')
+        .select('id, created_at, title, description, image_url, user_id, collection_id')
         .single();
       if (insertError) throw insertError;
       const defaultArtistId = artists[0]?.id ?? 'artist-lina-moreau';
+      const artistDisplayName = profile
+        ? [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() || undefined
+        : undefined;
       onSuccess({
         id: data.id,
         artistId: defaultArtistId,
-        collectionId: null,
+        collectionId: data.collection_id ?? null,
         title: data.title ?? '',
         description: data.description ?? '',
         price: 0,
@@ -1383,6 +1608,7 @@ function AddArtworkModal({ user, onClose, onSuccess }) {
         likes: 0,
         averageViewTime: 0,
         category: 'peinture',
+        artistDisplayName,
       });
     } catch (err) {
       setError(err?.message ?? 'Erreur lors de l\'ajout.');
@@ -1425,6 +1651,22 @@ function AddArtworkModal({ user, onClose, onSuccess }) {
               placeholder="Titre de l'œuvre"
             />
           </label>
+          {collections.length > 0 && (
+            <label className="block text-xs text-slate-300">
+              Collection
+              <select
+                value={collectionId}
+                onChange={(e) => setCollectionId(e.target.value)}
+                required={collections.length > 0}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
+              >
+                <option value="">Choisir une collection</option>
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="block text-xs text-slate-300">
             Description
             <textarea
@@ -1604,6 +1846,7 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingExposant, setPendingExposant] = useState(false);
   const [showAddArtworkModal, setShowAddArtworkModal] = useState(false);
+  const [exposantView, setExposantView] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1615,26 +1858,53 @@ export default function App() {
     return () => subscription?.unsubscribe();
   }, []);
 
+  const openExposantSpace = React.useCallback(async () => {
+    if (!user) return;
+    const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle();
+    if (!profile) setExposantView('profile');
+    else setExposantView('dashboard');
+  }, [user]);
+
+  useEffect(() => {
+    if (user && pendingExposant) {
+      setPendingExposant(false);
+      openExposantSpace();
+    }
+  }, [user, pendingExposant, openExposantSpace]);
+
   useEffect(() => {
     let cancelled = false;
 
-    supabase
-      .from('artworks')
-      .select('id, created_at, title, description, image_url, user_id')
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) {
-          console.warn('Supabase artworks:', error.message);
-          setArtworksFromSupabase([]);
-          return;
+    (async () => {
+      const { data, error } = await supabase
+        .from('artworks')
+        .select('id, created_at, title, description, image_url, user_id, collection_id')
+        .order('created_at', { ascending: false });
+      if (cancelled) return;
+      if (error) {
+        console.warn('Supabase artworks:', error.message);
+        setArtworksFromSupabase([]);
+        return;
+      }
+      const raw = Array.isArray(data) ? data : [];
+      const userIds = [...new Set(raw.map((r) => r.user_id).filter(Boolean))];
+      let profilesMap = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase.from('profiles').select('id, first_name, last_name').in('id', userIds);
+        if (Array.isArray(profiles)) {
+          profilesMap = Object.fromEntries(profiles.map((p) => [p.id, p]));
         }
-        const defaultArtistId = artists[0]?.id ?? 'artist-lina-moreau';
-        const raw = Array.isArray(data) ? data : [];
-        const mapped = raw.map((row) => ({
+      }
+      const defaultArtistId = artists[0]?.id ?? 'artist-lina-moreau';
+      const mapped = raw.map((row) => {
+        const profile = row.user_id ? profilesMap[row.user_id] : null;
+        const artistDisplayName = profile
+          ? [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() || 'Artiste'
+          : null;
+        return {
           id: row.id,
           artistId: defaultArtistId,
-          collectionId: null,
+          collectionId: row.collection_id ?? null,
           title: row.title ?? '',
           description: row.description ?? '',
           price: 0,
@@ -1643,15 +1913,17 @@ export default function App() {
           likes: 0,
           averageViewTime: 0,
           category: 'peinture',
-        }));
-        setArtworksFromSupabase(mapped);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          console.warn('Supabase artworks:', err?.message);
-          setArtworksFromSupabase([]);
-        }
+          user_id: row.user_id,
+          artistDisplayName: artistDisplayName || undefined,
+        };
       });
+      if (!cancelled) setArtworksFromSupabase(mapped);
+    })().catch((err) => {
+      if (!cancelled) {
+        console.warn('Supabase artworks:', err?.message);
+        setArtworksFromSupabase([]);
+      }
+    });
 
     return () => { cancelled = true; };
   }, []);
@@ -1757,7 +2029,7 @@ export default function App() {
       setShowAuthModal(true);
       setPendingExposant(true);
     } else {
-      setShowAddArtworkModal(true);
+      openExposantSpace();
     }
   };
 
@@ -1827,6 +2099,26 @@ export default function App() {
         />
         <OfferModal artwork={activeOfferArtwork} onClose={() => setActiveOfferArtwork(null)} />
       </>
+    );
+  }
+
+  if (exposantView === 'profile' && user) {
+    return (
+      <CreateProfileForm
+        user={user}
+        onSuccess={() => setExposantView('dashboard')}
+        onBack={() => setExposantView(null)}
+      />
+    );
+  }
+
+  if (exposantView === 'dashboard' && user) {
+    return (
+      <ExposantDashboardView
+        user={user}
+        onBack={() => setExposantView(null)}
+        onAddArtworkSuccess={(newArtwork) => setArtworksFromSupabase((prev) => [newArtwork, ...prev])}
+      />
     );
   }
 
@@ -1901,13 +2193,7 @@ export default function App() {
         >
           <div className="relative w-full max-w-sm">
             <AuthScreen
-              onAuthenticated={() => {
-                setShowAuthModal(false);
-                if (pendingExposant) {
-                  setPendingExposant(false);
-                  setShowAddArtworkModal(true);
-                }
-              }}
+              onAuthenticated={() => setShowAuthModal(false)}
             />
             <button
               type="button"
