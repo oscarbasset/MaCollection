@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/oscarbasset/MaCollection#readme",
   "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
     "framer-motion": "^12.33.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.4",
