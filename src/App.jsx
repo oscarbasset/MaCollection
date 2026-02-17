@@ -10,6 +10,7 @@ import {
   PlayCircle,
 } from 'lucide-react';
 import { artists, collections, artworks } from './mockData';
+import { supabase } from './supabaseClient';
 
 function getArtistById(id) {
   return artists.find((artist) => artist.id === id);
@@ -860,6 +861,7 @@ function CatalogView({
   onOpenArtworkDetail,
   onConnexionClick,
   onDevenirExposantClick,
+  onSignOut,
 }) {
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
@@ -913,6 +915,15 @@ function CatalogView({
               >
                 Devenir Exposant
               </button>
+              {onSignOut && (
+                <button
+                  type="button"
+                  onClick={onSignOut}
+                  className="rounded-full border border-white/30 px-4 py-2 text-[0.7rem] font-medium text-slate-300 hover:bg-white/5"
+                >
+                  Déconnexion
+                </button>
+              )}
             </div>
           </header>
           <div className="glass-panel flex items-center gap-2 rounded-2xl px-3 py-2.5 text-xs text-slate-100">
@@ -1277,7 +1288,95 @@ function OfferModal({ artwork, onClose }) {
   );
 }
 
+function AuthScreen({ onAuthenticated }) {
+  const [mode, setMode] = useState('signup');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+    try {
+      if (mode === 'signup') {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        setMessage({
+          type: 'success',
+          text: 'Compte créé. Consultez votre boîte mail pour confirmer si demandé.',
+        });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        onAuthenticated?.();
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err?.message ?? 'Une erreur est survenue.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-slate-950 to-black p-4">
+      <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-900/80 p-6 shadow-xl">
+        <h1 className="text-center text-lg font-semibold text-white">MaCollection</h1>
+        <p className="mt-1 text-center text-xs text-slate-400">
+          {mode === 'signup' ? 'Créer un compte' : 'Se connecter'}
+        </p>
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <label className="block text-xs text-slate-300">
+            Email
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="vous@exemple.com"
+              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+            />
+          </label>
+          <label className="block text-xs text-slate-300">
+            Mot de passe
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              placeholder="••••••••"
+              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+            />
+          </label>
+          {message.text && (
+            <p className={message.type === 'error' ? 'text-xs text-rose-400' : 'text-xs text-emerald-400'}>
+              {message.text}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-full bg-white py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:opacity-50"
+          >
+            {loading ? 'Chargement…' : mode === 'signup' ? 'Créer mon compte' : 'Se connecter'}
+          </button>
+        </form>
+        <button
+          type="button"
+          onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setMessage({ type: '', text: '' }); }}
+          className="mt-4 w-full text-center text-xs text-slate-400 underline hover:text-slate-200"
+        >
+          {mode === 'signup' ? 'Déjà un compte ? Se connecter' : "Pas de compte ? S'inscrire"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  const [user, setUser] = useState(null);
   const [role, setRole] = useState('visitor');
   const [isExhibitorAuthenticated, setIsExhibitorAuthenticated] =
     useState(false);
@@ -1307,6 +1406,16 @@ export default function App() {
   });
   const [view, setView] = useState('catalog');
   const [showConnexionModal, setShowConnexionModal] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription?.unsubscribe();
+  }, []);
 
   useEffect(() => {
     try {
@@ -1422,6 +1531,10 @@ export default function App() {
     bio: exhibitorProfile.bio || effectiveExhibitorBaseArtist?.bio || '',
   };
 
+  if (!user) {
+    return <AuthScreen onAuthenticated={() => {}} />;
+  }
+
   if (role === 'exhibitor') {
     if (!isExhibitorAuthenticated) {
       return (
@@ -1492,6 +1605,7 @@ export default function App() {
             onOpenArtworkDetail={handleOpenArtworkDetail}
             onConnexionClick={() => setShowConnexionModal(true)}
             onDevenirExposantClick={handleExhibitorAccessClick}
+            onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
           />
         ) : (
           <div className="balade-scroll-container scroll-smooth bg-black">
