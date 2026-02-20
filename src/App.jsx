@@ -9,6 +9,7 @@ import {
   Search as SearchIcon,
   Compass,
   PlayCircle,
+  LogOut,
 } from 'lucide-react';
 import { artists, collections, artworks } from './mockData';
 import { supabase } from './supabaseClient';
@@ -16,6 +17,19 @@ import { supabase } from './supabaseClient';
 const LS_EXPOSANT_KEY = 'macollection_has_exposant_profile';
 // Nom de la colonne photo de profil dans la table profiles (à changer en 'photo_url' si votre table l'utilise)
 const PROFILE_AVATAR_COLUMN = 'avatar_url';
+
+function getInitials(profile, email) {
+  if (profile?.first_name || profile?.last_name) {
+    const first = (profile.first_name ?? '').trim().charAt(0).toUpperCase();
+    const last = (profile.last_name ?? '').trim().charAt(0).toUpperCase();
+    if (first || last) return (first + last).slice(0, 2);
+  }
+  if (email && typeof email === 'string') {
+    const local = email.split('@')[0].trim();
+    return local.charAt(0).toUpperCase().slice(0, 2);
+  }
+  return '?';
+}
 
 function getArtistById(id) {
   return artists.find((artist) => artist.id === id);
@@ -367,6 +381,7 @@ function MonEspaceView({ user, onBack, onEdit, onProfileUpdated }) {
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [showAddArtworkModal, setShowAddArtworkModal] = useState(false);
 
   const loadData = React.useCallback(async () => {
@@ -439,24 +454,22 @@ function MonEspaceView({ user, onBack, onEdit, onProfileUpdated }) {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setSaveError('');
+    setSaveSuccess(false);
     setSaving(true);
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) {
-        console.error('[Mon Espace] Erreur Auth (getUser):', authError.message, authError);
         setSaveError('Erreur de connexion. Reconnectez-vous puis réessayez.');
         setSaving(false);
         return;
       }
       if (!user?.id) {
-        console.error('[Mon Espace] Utilisateur nul ou sans id:', { user });
         setSaveError('Session invalide. Reconnectez-vous.');
         setSaving(false);
         return;
       }
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(user.id)) {
-        console.error('[Mon Espace] ID non UUID:', typeof user.id, user.id);
         setSaveError('Identifiant utilisateur invalide. Reconnectez-vous.');
         setSaving(false);
         return;
@@ -470,8 +483,7 @@ function MonEspaceView({ user, onBack, onEdit, onProfileUpdated }) {
           if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
           setAvatarPreviewUrl('');
         } catch (storageErr) {
-          console.error('[Mon Espace] StorageApiError (bucket avatars):', storageErr);
-          setSaveError('Erreur de stockage : l\'image n\'a pas pu être envoyée. Vérifiez que le bucket "avatars" existe et que les politiques Storage sont configurées (Supabase > Storage > Buckets > avatars > Policies).');
+          setSaveError('Erreur de stockage : l\'image n\'a pas pu être envoyée. Vérifiez le bucket "avatars" et les politiques Storage sur Supabase.');
           setSaving(false);
           return;
         }
@@ -481,24 +493,19 @@ function MonEspaceView({ user, onBack, onEdit, onProfileUpdated }) {
         first_name: editFirstName.trim() || null,
         last_name: editLastName.trim() || null,
         description: editDescription.trim() || null,
+        avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
       };
-      if (PROFILE_AVATAR_COLUMN) {
-        row[PROFILE_AVATAR_COLUMN] = avatarUrl;
-      }
-      console.log('[Mon Espace] Envoi profil à Supabase:', JSON.stringify(row, null, 2));
       const { error } = await supabase
         .from('profiles')
         .upsert(row, { onConflict: 'id' });
-      if (error) {
-        console.error('[Mon Espace] Erreur Database (profiles.upsert):', error.message, error);
-        throw error;
-      }
-      setProfile((prev) => (prev ? { ...prev, first_name: editFirstName.trim(), last_name: editLastName.trim(), description: editDescription.trim(), [PROFILE_AVATAR_COLUMN]: avatarUrl } : { id: userId, first_name: editFirstName.trim(), last_name: editLastName.trim(), description: editDescription.trim(), [PROFILE_AVATAR_COLUMN]: avatarUrl }));
-      onProfileUpdated?.({ first_name: editFirstName.trim(), last_name: editLastName.trim(), description: editDescription.trim(), [PROFILE_AVATAR_COLUMN]: avatarUrl });
+      if (error) throw error;
+      setProfile((prev) => (prev ? { ...prev, first_name: editFirstName.trim(), last_name: editLastName.trim(), description: editDescription.trim(), avatar_url: avatarUrl } : { id: userId, first_name: editFirstName.trim(), last_name: editLastName.trim(), description: editDescription.trim(), avatar_url: avatarUrl }));
+      onProfileUpdated?.({ first_name: editFirstName.trim(), last_name: editLastName.trim(), description: editDescription.trim(), avatar_url: avatarUrl });
       setEditingProfile(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      console.error('[Mon Espace] Erreur sauvegarde:', err?.message, err);
       setSaveError(err?.message ?? 'Erreur lors de la sauvegarde.');
     } finally {
       setSaving(false);
@@ -591,6 +598,7 @@ function MonEspaceView({ user, onBack, onEdit, onProfileUpdated }) {
                 </div>
               </div>
               {saveError && <p className="text-xs text-rose-400">{saveError}</p>}
+              {saveSuccess && <p className="text-xs text-emerald-400">Profil mis à jour !</p>}
               <div className="flex flex-wrap gap-2">
                 <button
                   type="submit"
@@ -1443,18 +1451,72 @@ function CatalogView({
   );
 }
 
-function Navbar({ user, onConnexionClick, onMonEspaceClick, onSignOut }) {
+function Navbar({ user, profile, onConnexionClick, onMonEspaceClick, onSignOut }) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = React.useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const avatarUrl = profile?.[PROFILE_AVATAR_COLUMN];
+  const initials = user ? getInitials(profile, user.email) : '';
+
   return (
     <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-end gap-2 border-b border-white/10 bg-black/80 px-4 py-3 backdrop-blur-md">
       <div className="flex items-center gap-2">
         {user ? (
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="rounded-full border border-white/30 px-4 py-2 text-[0.7rem] font-medium text-slate-200 transition hover:bg-white/5"
-          >
-            Déconnexion
-          </button>
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setDropdownOpen((o) => !o)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-slate-700 text-sm font-medium text-white shadow-lg transition hover:border-white/40 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-white/30"
+              aria-label="Menu compte"
+              aria-expanded={dropdownOpen}
+            >
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="select-none">{initials}</span>
+              )}
+            </button>
+            {dropdownOpen && (
+              <div className="absolute right-0 top-full z-50 mt-2 min-w-[10rem] overflow-hidden rounded-xl border border-white/10 bg-slate-900/95 py-1 shadow-xl backdrop-blur-md">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    onMonEspaceClick?.();
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[0.8rem] text-slate-100 transition hover:bg-white/10"
+                >
+                  <User2 className="h-4 w-4 text-slate-400" />
+                  Mon Espace
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    onSignOut?.();
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[0.8rem] text-slate-100 transition hover:bg-white/10"
+                >
+                  <LogOut className="h-4 w-4 text-slate-400" />
+                  Déconnexion
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <button
             type="button"
@@ -1464,13 +1526,6 @@ function Navbar({ user, onConnexionClick, onMonEspaceClick, onSignOut }) {
             Connexion
           </button>
         )}
-        <button
-          type="button"
-          onClick={onMonEspaceClick}
-          className="rounded-full bg-white px-4 py-2 text-[0.7rem] font-semibold text-slate-900 shadow-soft-xl transition hover:bg-slate-100"
-        >
-          Mon Espace
-        </button>
       </div>
     </header>
   );
@@ -1839,10 +1894,7 @@ async function uploadAvatarImage(supabaseClient, userId, file) {
   const { error: uploadError } = await supabaseClient.storage
     .from(BUCKET_AVATARS)
     .upload(filePath, file, { cacheControl: '3600', upsert: true });
-  if (uploadError) {
-    console.error('[Mon Espace] Erreur Storage (upload avatar):', uploadError.message, uploadError);
-    throw uploadError;
-  }
+  if (uploadError) throw uploadError;
   const { data: urlData } = supabaseClient.storage.from(BUCKET_AVATARS).getPublicUrl(filePath);
   return urlData.publicUrl;
 }
@@ -2455,6 +2507,7 @@ export default function App() {
       <>
         <Navbar
           user={user}
+          profile={exposantProfile}
           onConnexionClick={() => setShowAuthModal(true)}
           onMonEspaceClick={handleMonEspaceClick}
           onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
@@ -2475,6 +2528,7 @@ export default function App() {
       <>
         <Navbar
           user={user}
+          profile={exposantProfile}
           onConnexionClick={() => setShowAuthModal(true)}
           onMonEspaceClick={handleMonEspaceClick}
           onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
@@ -2495,6 +2549,7 @@ export default function App() {
       <>
         <Navbar
           user={user}
+          profile={exposantProfile}
           onConnexionClick={() => setShowAuthModal(true)}
           onMonEspaceClick={handleMonEspaceClick}
           onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
@@ -2504,7 +2559,7 @@ export default function App() {
             user={user}
             onBack={() => navigate('/')}
             onEdit={() => setExposantView('dashboard')}
-            onProfileUpdated={(updated) => setExposantProfile((prev) => (prev ? { ...prev, ...updated } : null))}
+            onProfileUpdated={(updated) => setExposantProfile((prev) => (prev ? { ...prev, ...updated } : { id: user.id, ...updated }))}
           />
         </div>
       </>
@@ -2515,6 +2570,7 @@ export default function App() {
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-black via-mc-bg to-black">
       <Navbar
         user={user}
+        profile={exposantProfile}
         onConnexionClick={() => setShowAuthModal(true)}
         onMonEspaceClick={handleMonEspaceClick}
         onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
