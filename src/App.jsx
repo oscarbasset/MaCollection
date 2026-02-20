@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BadgeDollarSign,
@@ -11,6 +12,10 @@ import {
 } from 'lucide-react';
 import { artists, collections, artworks } from './mockData';
 import { supabase } from './supabaseClient';
+
+const LS_EXPOSANT_KEY = 'macollection_has_exposant_profile';
+// Nom de la colonne photo de profil dans la table profiles (à changer en 'photo_url' si votre table l'utilise)
+const PROFILE_AVATAR_COLUMN = 'avatar_url';
 
 function getArtistById(id) {
   return artists.find((artist) => artist.id === id);
@@ -349,38 +354,67 @@ function ArtistProfileView({ artistId, onBackToFeed }) {
   );
 }
 
-function MonEspaceView({ user, onBack, onEdit }) {
+function MonEspaceView({ user, onBack, onEdit, onProfileUpdated }) {
   const [profile, setProfile] = useState(null);
   const [collections, setCollections] = useState([]);
   const [userArtworks, setUserArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [showAddArtworkModal, setShowAddArtworkModal] = useState(false);
+
+  const loadData = React.useCallback(async () => {
+    const [profileRes, collectionsRes, artworksRes] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+      supabase.from('collections').select('id, name, description').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('artworks').select('id, title, description, image_url, collection_id').eq('user_id', user.id).order('created_at', { ascending: false }),
+    ]);
+    setProfile(profileRes.data ?? null);
+    setCollections(Array.isArray(collectionsRes.data) ? collectionsRes.data : []);
+    const raw = Array.isArray(artworksRes.data) ? artworksRes.data : [];
+    setUserArtworks(raw.map((row) => ({
+      id: row.id,
+      title: row.title ?? '',
+      description: row.description ?? '',
+      mediaType: 'image',
+      mediaUrl: row.image_url ?? '',
+      price: 0,
+      averageViewTime: 0,
+      collectionId: row.collection_id ?? null,
+    })));
+  }, [user.id]);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const [profileRes, collectionsRes, artworksRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
-        supabase.from('collections').select('id, name, description').eq('user_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('artworks').select('id, title, description, image_url, collection_id').eq('user_id', user.id).order('created_at', { ascending: false }),
-      ]);
-      if (cancelled) return;
-      setProfile(profileRes.data ?? null);
-      setCollections(Array.isArray(collectionsRes.data) ? collectionsRes.data : []);
-      const raw = Array.isArray(artworksRes.data) ? artworksRes.data : [];
-      setUserArtworks(raw.map((row) => ({
-        id: row.id,
-        title: row.title ?? '',
-        description: row.description ?? '',
-        mediaType: 'image',
-        mediaUrl: row.image_url ?? '',
-        price: 0,
-        averageViewTime: 0,
-        collectionId: row.collection_id ?? null,
-      })));
-      setLoading(false);
-    })();
+    loadData().then(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [user.id]);
+  }, [loadData]);
+
+  useEffect(() => {
+    if (profile) {
+      setEditFirstName(profile.first_name ?? '');
+      setEditLastName(profile.last_name ?? '');
+      setEditDescription(profile.description ?? '');
+    }
+  }, [profile?.id]);
+
+  useEffect(() => {
+    if (!loading && !profile) {
+      setEditingProfile(true);
+    }
+  }, [loading, profile]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+    };
+  }, [avatarPreviewUrl]);
 
   const collectionsWithArtworks = useMemo(() => {
     return collections.map((col) => ({
@@ -394,6 +428,83 @@ function MonEspaceView({ user, onBack, onEdit }) {
     [userArtworks],
   );
 
+  const handleAvatarChange = (e) => {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+    setAvatarFile(file);
+    setAvatarPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setSaveError('');
+    setSaving(true);
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        console.error('[Mon Espace] Erreur Auth (getUser):', authError.message, authError);
+        setSaveError('Erreur de connexion. Reconnectez-vous puis réessayez.');
+        setSaving(false);
+        return;
+      }
+      if (!user?.id) {
+        console.error('[Mon Espace] Utilisateur nul ou sans id:', { user });
+        setSaveError('Session invalide. Reconnectez-vous.');
+        setSaving(false);
+        return;
+      }
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(user.id)) {
+        console.error('[Mon Espace] ID non UUID:', typeof user.id, user.id);
+        setSaveError('Identifiant utilisateur invalide. Reconnectez-vous.');
+        setSaving(false);
+        return;
+      }
+      const userId = user.id;
+      let avatarUrl = profile?.[PROFILE_AVATAR_COLUMN] ?? null;
+      if (avatarFile) {
+        try {
+          avatarUrl = await uploadAvatarImage(supabase, userId, avatarFile);
+          setAvatarFile(null);
+          if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+          setAvatarPreviewUrl('');
+        } catch (storageErr) {
+          console.error('[Mon Espace] StorageApiError (bucket avatars):', storageErr);
+          setSaveError('Erreur de stockage : l\'image n\'a pas pu être envoyée. Vérifiez que le bucket "avatars" existe et que les politiques Storage sont configurées (Supabase > Storage > Buckets > avatars > Policies).');
+          setSaving(false);
+          return;
+        }
+      }
+      const row = {
+        id: userId,
+        first_name: editFirstName.trim() || null,
+        last_name: editLastName.trim() || null,
+        description: editDescription.trim() || null,
+        updated_at: new Date().toISOString(),
+      };
+      if (PROFILE_AVATAR_COLUMN) {
+        row[PROFILE_AVATAR_COLUMN] = avatarUrl;
+      }
+      console.log('[Mon Espace] Envoi profil à Supabase:', JSON.stringify(row, null, 2));
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(row, { onConflict: 'id' });
+      if (error) {
+        console.error('[Mon Espace] Erreur Database (profiles.upsert):', error.message, error);
+        throw error;
+      }
+      setProfile((prev) => (prev ? { ...prev, first_name: editFirstName.trim(), last_name: editLastName.trim(), description: editDescription.trim(), [PROFILE_AVATAR_COLUMN]: avatarUrl } : { id: userId, first_name: editFirstName.trim(), last_name: editLastName.trim(), description: editDescription.trim(), [PROFILE_AVATAR_COLUMN]: avatarUrl }));
+      onProfileUpdated?.({ first_name: editFirstName.trim(), last_name: editLastName.trim(), description: editDescription.trim(), [PROFILE_AVATAR_COLUMN]: avatarUrl });
+      setEditingProfile(false);
+    } catch (err) {
+      console.error('[Mon Espace] Erreur sauvegarde:', err?.message, err);
+      setSaveError(err?.message ?? 'Erreur lors de la sauvegarde.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
@@ -404,6 +515,7 @@ function MonEspaceView({ user, onBack, onEdit }) {
 
   const displayName = profile ? [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() || 'Mon espace' : 'Mon espace';
   const description = profile?.description ?? '';
+  const currentAvatarUrl = avatarPreviewUrl || profile?.[PROFILE_AVATAR_COLUMN];
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-black via-mc-bg to-black px-3 py-4 sm:px-6 md:px-10">
@@ -422,31 +534,140 @@ function MonEspaceView({ user, onBack, onEdit }) {
       </header>
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 pb-6">
-        <section className="glass-panel flex flex-col gap-4 rounded-[32px] p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-6">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 overflow-hidden rounded-[24px] border border-white/20 bg-black/50 sm:h-20 sm:w-20 flex items-center justify-center">
-              <User2 className="h-8 w-8 text-slate-400 sm:h-10 sm:w-10" />
+        {/* Bloc Profil / Bio */}
+        <section className="glass-panel rounded-[32px] p-4 sm:p-6">
+          {editingProfile ? (
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <label className="block shrink-0 cursor-pointer">
+                  <span className="mb-2 block text-xs text-slate-400">Photo de profil</span>
+                  <div className="relative h-20 w-20 overflow-hidden rounded-[24px] border border-white/20 bg-black/50 sm:h-24 sm:w-24">
+                    {currentAvatarUrl ? (
+                      <img src={currentAvatarUrl} alt="Aperçu" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <User2 className="h-10 w-10 text-slate-500" />
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="mt-2 block w-full text-[0.65rem] text-slate-400 file:mr-2 file:rounded-lg file:border-0 file:bg-white/10 file:px-2 file:py-1 file:text-xs file:text-slate-200"
+                  />
+                </label>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <label className="block text-xs text-slate-400">
+                    Prénom
+                    <input
+                      type="text"
+                      value={editFirstName}
+                      onChange={(e) => setEditFirstName(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+                      placeholder="Prénom"
+                    />
+                  </label>
+                  <label className="block text-xs text-slate-400">
+                    Nom
+                    <input
+                      type="text"
+                      value={editLastName}
+                      onChange={(e) => setEditLastName(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+                      placeholder="Nom"
+                    />
+                  </label>
+                  <label className="block text-xs text-slate-400">
+                    Bio / Description
+                    <textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      rows={4}
+                      className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+                      placeholder="Présentez votre travail…"
+                    />
+                  </label>
+                </div>
+              </div>
+              {saveError && <p className="text-xs text-rose-400">{saveError}</p>}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100 disabled:opacity-50"
+                >
+                  {saving ? 'Sauvegarde…' : 'Sauvegarder'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setEditingProfile(false); setSaveError(''); }}
+                  className="rounded-full border border-white/20 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-white/5"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 overflow-hidden rounded-[24px] border border-white/20 bg-black/50 sm:h-20 sm:w-20 flex items-center justify-center">
+                  {profile?.[PROFILE_AVATAR_COLUMN] ? (
+                    <img src={profile[PROFILE_AVATAR_COLUMN]} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <User2 className="h-8 w-8 text-slate-400 sm:h-10 sm:w-10" />
+                  )}
+                </div>
+                <div className="space-y-1 flex-1 min-w-0">
+                  <h1 className="text-lg font-semibold text-slate-50 sm:text-xl truncate">
+                    {displayName}
+                  </h1>
+                  {description && (
+                    <p className="text-xs text-slate-300 sm:text-sm line-clamp-3">
+                      {description}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setEditingProfile(true)}
+                  className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-slate-100 hover:bg-white/10"
+                >
+                  Modifier mon profil
+                </button>
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-slate-100 hover:bg-white/10"
+                >
+                  Gérer mes œuvres
+                </button>
+              </div>
             </div>
-            <div className="space-y-1 flex-1">
-              <h1 className="text-lg font-semibold text-slate-50 sm:text-xl">
-                {displayName}
-              </h1>
-              {description && (
-                <p className="text-xs text-slate-300 sm:text-sm">
-                  {description}
-                </p>
-              )}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onEdit}
-            className="rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-slate-100 hover:bg-white/10 shrink-0"
-          >
-            Modifier mon profil
-          </button>
+          )}
         </section>
 
+        {/* Ajouter une œuvre */}
+        <section className="rounded-2xl border border-white/10 bg-black/40 p-4">
+          <h2 className="text-sm font-semibold text-slate-50 mb-2">Mes œuvres</h2>
+          {collections.length === 0 ? (
+            <p className="text-xs text-slate-400 mb-3">
+              Créez d’abord une collection depuis « Gérer mes œuvres » pour pouvoir ajouter des œuvres.
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowAddArtworkModal(true)}
+              className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100"
+            >
+              Ajouter une œuvre
+            </button>
+          )}
+        </section>
+
+        {/* Œuvres par collection */}
         <section className="space-y-5 pb-12">
           {collectionsWithArtworks.map(({ collection, artworks: colArtworks }) => (
             <div
@@ -521,6 +742,31 @@ function MonEspaceView({ user, onBack, onEdit }) {
           )}
         </section>
       </main>
+
+      {showAddArtworkModal && collections.length > 0 && (
+        <AddArtworkModal
+          user={user}
+          profile={profile}
+          collections={collections}
+          onClose={() => setShowAddArtworkModal(false)}
+          onSuccess={(newArtwork) => {
+            setUserArtworks((prev) => [
+              {
+                id: newArtwork.id,
+                title: newArtwork.title ?? '',
+                description: newArtwork.description ?? '',
+                mediaType: 'image',
+                mediaUrl: newArtwork.mediaUrl ?? '',
+                price: 0,
+                averageViewTime: 0,
+                collectionId: newArtwork.collectionId ?? null,
+              },
+              ...prev,
+            ]);
+            setShowAddArtworkModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -1035,13 +1281,6 @@ function CatalogView({
   onOpenOffer,
   onOpenArtistProfile,
   onOpenArtworkDetail,
-  user,
-  onConnexionClick,
-  onSinscrireClick,
-  onDevenirExposantClick,
-  onSignOut,
-  hasExposantProfile,
-  onMonEspaceClick,
 }) {
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
@@ -1078,55 +1317,6 @@ function CatalogView({
     <div className="relative h-full overflow-y-auto">
       <div className="bg-gradient-to-b from-black/90 via-mc-bg/95 to-mc-bg px-4 pb-3 pt-2 sm:px-6 md:px-8">
         <div className="mx-auto w-full max-w-4xl space-y-3">
-          <header className="flex items-center justify-between gap-3 pb-2">
-            <div className="flex items-center gap-2">
-              {!user && (
-                <>
-                  <button
-                    type="button"
-                    onClick={onConnexionClick}
-                    className="rounded-full border border-white/30 bg-transparent px-4 py-2 text-[0.7rem] font-medium text-slate-100 transition hover:border-white/50 hover:bg-white/5"
-                  >
-                    Se connecter
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onSinscrireClick}
-                    className="rounded-full border border-white/30 bg-transparent px-4 py-2 text-[0.7rem] font-medium text-slate-100 transition hover:border-white/50 hover:bg-white/5"
-                  >
-                    S'inscrire
-                  </button>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {user && hasExposantProfile && onMonEspaceClick && (
-                <button
-                  type="button"
-                  onClick={onMonEspaceClick}
-                  className="rounded-full border border-white/30 bg-transparent px-4 py-2 text-[0.7rem] font-medium text-slate-100 transition hover:border-white/50 hover:bg-white/5"
-                >
-                  Mon Espace
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={onDevenirExposantClick}
-                className="rounded-full bg-white px-4 py-2 text-[0.7rem] font-semibold text-slate-900 shadow-soft-xl transition hover:bg-slate-100"
-              >
-                Devenir Exposant
-              </button>
-              {user && onSignOut && (
-                <button
-                  type="button"
-                  onClick={onSignOut}
-                  className="rounded-full border border-white/30 px-4 py-2 text-[0.7rem] font-medium text-slate-300 hover:bg-white/5"
-                >
-                  Déconnexion
-                </button>
-              )}
-            </div>
-          </header>
           <div className="glass-panel flex items-center gap-2 rounded-2xl px-3 py-2.5 text-xs text-slate-100">
             <SearchIcon className="h-4 w-4 text-slate-300" />
             <input
@@ -1250,6 +1440,39 @@ function CatalogView({
         </div>
       </div>
     </div>
+  );
+}
+
+function Navbar({ user, onConnexionClick, onMonEspaceClick, onSignOut }) {
+  return (
+    <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-end gap-2 border-b border-white/10 bg-black/80 px-4 py-3 backdrop-blur-md">
+      <div className="flex items-center gap-2">
+        {user ? (
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="rounded-full border border-white/30 px-4 py-2 text-[0.7rem] font-medium text-slate-200 transition hover:bg-white/5"
+          >
+            Déconnexion
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onConnexionClick}
+            className="rounded-full border border-white/30 px-4 py-2 text-[0.7rem] font-medium text-slate-100 transition hover:border-white/50 hover:bg-white/5"
+          >
+            Connexion
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onMonEspaceClick}
+          className="rounded-full bg-white px-4 py-2 text-[0.7rem] font-semibold text-slate-900 shadow-soft-xl transition hover:bg-slate-100"
+        >
+          Mon Espace
+        </button>
+      </div>
+    </header>
   );
 }
 
@@ -1489,103 +1712,6 @@ function OfferModal({ artwork, onClose }) {
   );
 }
 
-function CreateProfileForm({ user, onSuccess, onBack }) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    if (!firstName.trim() || !lastName.trim()) {
-      setError('Nom et prénom sont requis.');
-      return;
-    }
-    setLoading(true);
-    try {
-      const { error: upsertError } = await supabase.from('profiles').upsert(
-        {
-          id: user.id,
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          description: description.trim() || null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' }
-      );
-      if (upsertError) throw upsertError;
-      onSuccess?.();
-    } catch (err) {
-      setError(err?.message ?? 'Erreur lors de l\'enregistrement.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/95 p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Créer mon profil artiste</h2>
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-300 hover:bg-white/10"
-            aria-label="Fermer"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block text-xs text-slate-300">
-            Prénom
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-              placeholder="Prénom"
-            />
-          </label>
-          <label className="block text-xs text-slate-300">
-            Nom
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-              placeholder="Nom"
-            />
-          </label>
-          <label className="block text-xs text-slate-300">
-            Description / Bio
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none"
-              placeholder="Présentez votre travail (optionnel)"
-            />
-          </label>
-          {error && <p className="text-xs text-rose-400">{error}</p>}
-          <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onBack} className="rounded-full border border-white/20 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-white/5">
-              Retour
-            </button>
-            <button type="submit" disabled={loading} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100 disabled:opacity-50">
-              {loading ? 'Enregistrement…' : 'Créer mon profil'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 function ExposantDashboardView({ user, onBack, onAddArtworkSuccess }) {
   const [profile, setProfile] = useState(null);
   const [collections, setCollections] = useState([]);
@@ -1637,7 +1763,7 @@ function ExposantDashboardView({ user, onBack, onAddArtworkSuccess }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-slate-950">
+    <div className="fixed top-14 left-0 right-0 bottom-0 z-50 flex flex-col overflow-y-auto bg-slate-950">
       <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3">
         <h1 className="text-lg font-semibold text-white">Tableau de bord</h1>
         <button type="button" onClick={onBack} className="rounded-full border border-white/20 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-white/5">
@@ -1702,6 +1828,24 @@ function ExposantDashboardView({ user, onBack, onAddArtworkSuccess }) {
 }
 
 const BUCKET_ARTWORKS = 'artworks';
+const BUCKET_AVATARS = 'avatars';
+
+// Bucket "avatars" : créer le bucket dans Supabase (Storage) et configurer les policies RLS
+// (Storage > Buckets > avatars > Policies) pour autoriser l'upload des utilisateurs connectés.
+async function uploadAvatarImage(supabaseClient, userId, file) {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const uniqueName = `${userId}-${Date.now()}.${ext}`;
+  const filePath = `${userId}/${uniqueName}`;
+  const { error: uploadError } = await supabaseClient.storage
+    .from(BUCKET_AVATARS)
+    .upload(filePath, file, { cacheControl: '3600', upsert: true });
+  if (uploadError) {
+    console.error('[Mon Espace] Erreur Storage (upload avatar):', uploadError.message, uploadError);
+    throw uploadError;
+  }
+  const { data: urlData } = supabaseClient.storage.from(BUCKET_AVATARS).getPublicUrl(filePath);
+  return urlData.publicUrl;
+}
 
 async function uploadArtworkImage(supabaseClient, userId, file) {
   const safeName = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
@@ -2031,11 +2175,13 @@ export default function App() {
   });
   const [view, setView] = useState('catalog');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [pendingExposant, setPendingExposant] = useState(false);
+  const [pendingMonEspace, setPendingMonEspace] = useState(false);
   const [showAddArtworkModal, setShowAddArtworkModal] = useState(false);
   const [exposantView, setExposantView] = useState(null);
   const [exposantProfile, setExposantProfile] = useState(null);
-  const [showMonEspaceView, setShowMonEspaceView] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isMonEspaceRoute = location.pathname === '/mon-espace';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -2051,10 +2197,17 @@ export default function App() {
     let cancelled = false;
     if (!user) {
       setExposantProfile(null);
+      try { window.localStorage.removeItem(LS_EXPOSANT_KEY); } catch (_) {}
       return;
     }
-    supabase.from('profiles').select('id, first_name, last_name, description').eq('id', user.id).maybeSingle().then(({ data }) => {
-      if (!cancelled) setExposantProfile(data ?? null);
+    supabase.from('profiles').select(`id, first_name, last_name, description, ${PROFILE_AVATAR_COLUMN}`).eq('id', user.id).maybeSingle().then(({ data }) => {
+      if (!cancelled) {
+        setExposantProfile(data ?? null);
+        try {
+          if (data) window.localStorage.setItem(LS_EXPOSANT_KEY, user.id);
+          else window.localStorage.removeItem(LS_EXPOSANT_KEY);
+        } catch (_) {}
+      }
     });
     return () => { cancelled = true; };
   }, [user?.id]);
@@ -2067,11 +2220,11 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    if (user && pendingExposant) {
-      setPendingExposant(false);
-      openExposantSpace();
+    if (user && pendingMonEspace) {
+      setPendingMonEspace(false);
+      navigate('/mon-espace');
     }
-  }, [user, pendingExposant, openExposantSpace]);
+  }, [user, pendingMonEspace, navigate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2225,12 +2378,18 @@ export default function App() {
     setActiveDetailArtwork(artwork);
   };
 
-  const handleDevenirExposantClick = () => {
+  const hasExposantProfile = !!exposantProfile || (typeof window !== 'undefined' && user && window.localStorage.getItem(LS_EXPOSANT_KEY) === user.id);
+
+  useEffect(() => {
+    if (isMonEspaceRoute && !user) navigate('/', { replace: true });
+  }, [isMonEspaceRoute, user, navigate]);
+
+  const handleMonEspaceClick = () => {
     if (!user) {
       setShowAuthModal(true);
-      setPendingExposant(true);
+      setPendingMonEspace(true);
     } else {
-      openExposantSpace();
+      navigate('/mon-espace');
     }
   };
 
@@ -2294,55 +2453,77 @@ export default function App() {
   ) {
     return (
       <>
-        <ArtistProfileView
-          artistId={immersiveView.artistId}
-          onBackToFeed={handleBackToFeed}
+        <Navbar
+          user={user}
+          onConnexionClick={() => setShowAuthModal(true)}
+          onMonEspaceClick={handleMonEspaceClick}
+          onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
         />
+        <div className="pt-14">
+          <ArtistProfileView
+            artistId={immersiveView.artistId}
+            onBackToFeed={handleBackToFeed}
+          />
+        </div>
         <OfferModal artwork={activeOfferArtwork} onClose={() => setActiveOfferArtwork(null)} />
       </>
     );
   }
 
-  if (exposantView === 'profile' && user) {
-    return (
-      <CreateProfileForm
-        user={user}
-        onSuccess={() => setExposantView('dashboard')}
-        onBack={() => setExposantView(null)}
-      />
-    );
-  }
-
   if (exposantView === 'dashboard' && user) {
     return (
-      <ExposantDashboardView
-        user={user}
-        onBack={() => setExposantView(null)}
-        onAddArtworkSuccess={(newArtwork) => setArtworksFromSupabase((prev) => [newArtwork, ...prev])}
-      />
+      <>
+        <Navbar
+          user={user}
+          onConnexionClick={() => setShowAuthModal(true)}
+          onMonEspaceClick={handleMonEspaceClick}
+          onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
+        />
+        <div className="pt-14">
+          <ExposantDashboardView
+            user={user}
+            onBack={() => setExposantView(null)}
+            onAddArtworkSuccess={(newArtwork) => setArtworksFromSupabase((prev) => [newArtwork, ...prev])}
+          />
+        </div>
+      </>
     );
   }
 
-  if (showMonEspaceView && user) {
+  if (isMonEspaceRoute && user) {
     return (
-      <MonEspaceView
-        user={user}
-        onBack={() => setShowMonEspaceView(false)}
-        onEdit={() => {
-          setShowMonEspaceView(false);
-          setExposantView('dashboard');
-        }}
-      />
+      <>
+        <Navbar
+          user={user}
+          onConnexionClick={() => setShowAuthModal(true)}
+          onMonEspaceClick={handleMonEspaceClick}
+          onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
+        />
+        <div className="pt-14">
+          <MonEspaceView
+            user={user}
+            onBack={() => navigate('/')}
+            onEdit={() => setExposantView('dashboard')}
+            onProfileUpdated={(updated) => setExposantProfile((prev) => (prev ? { ...prev, ...updated } : null))}
+          />
+        </div>
+      </>
     );
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-black via-mc-bg to-black">
+      <Navbar
+        user={user}
+        onConnexionClick={() => setShowAuthModal(true)}
+        onMonEspaceClick={handleMonEspaceClick}
+        onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
+      />
       <main
         className={
           view === 'catalog'
-            ? 'relative flex-1 pb-24'
-            : 'relative flex-1 bg-black'
+            ? 'relative flex-1 pb-24 pt-14'
+            : 'relative flex-1 bg-black pt-14'
         }
       >
         {view === 'catalog' ? (
@@ -2353,13 +2534,6 @@ export default function App() {
             onOpenOffer={handleOpenOffer}
             onOpenArtistProfile={handleOpenArtistProfile}
             onOpenArtworkDetail={handleOpenArtworkDetail}
-            user={user}
-            onConnexionClick={() => setShowAuthModal(true)}
-            onSinscrireClick={() => setShowAuthModal(true)}
-            onDevenirExposantClick={handleDevenirExposantClick}
-            onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
-            hasExposantProfile={!!exposantProfile}
-            onMonEspaceClick={() => setShowMonEspaceView(true)}
           />
         ) : (
           <div className="balade-scroll-container scroll-smooth bg-black">
@@ -2415,7 +2589,7 @@ export default function App() {
               type="button"
               onClick={() => {
                 setShowAuthModal(false);
-                setPendingExposant(false);
+                setPendingMonEspace(false);
               }}
               className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700"
               aria-label="Fermer"
