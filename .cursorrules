@@ -1,0 +1,20 @@
+# RÈGLES DE DÉVELOPPEMENT - PROJET MACONNECTION
+
+## 1. PROTECTION DU CODE (CRITIQUE)
+- **NE JAMAIS** supprimer de fonctions, de composants ou de structures existantes sans une demande explicite et confirmée.
+- Si tu dois modifier un fichier long, utilise une approche "diff" : ne réécris que les lignes nécessaires et utilise `// ... reste du code` pour le reste.
+- Toujours vérifier si une fonction existe déjà avant d'en créer une nouvelle.
+
+## 2. STACK TECHNIQUE
+- **Framework :** React / Next.js (App Router de préférence).
+- **Base de données / Auth :** Supabase.
+- **Style :** Tailwind CSS.
+- **Langage :** JavaScript / TypeScript (respecte le choix actuel du fichier).
+
+## 3. INSTRUCTIONS SUPABASE
+- Utilise toujours le client Supabase déjà configuré (ne pas ré-initialiser un nouveau client).
+- Respecte les politiques de sécurité (RLS) existantes.
+
+## 4. COLLABORATION
+- Avant chaque modification majeure, décris brièvement ton plan d'action pour validation.
+- Commente les nouvelles fonctions pour que mon collègue puisse les comprendre facilement.
