@@ -79,34 +79,30 @@ function formatSeconds(seconds) {
 }
 
 function ArtworkMedia({ mediaType, mediaUrl, title }) {
+  /* width 100%, height 100%, object-fit cover : plein écran ; desktop = centré dans la colonne */
+  const mediaClasses =
+    'absolute inset-0 z-0 h-full w-full object-cover object-center';
   if (mediaType === 'video') {
     return (
-      <div className="relative h-full w-full overflow-hidden bg-black/80">
-        <video
-          src={mediaUrl}
-          className="h-full w-full object-cover opacity-90"
-          autoPlay
-          loop
-          muted
-          playsInline
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
-      </div>
+      <video
+        src={mediaUrl}
+        className={`${mediaClasses} opacity-90`}
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
     );
   }
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-black/80">
-      <img
-        src={mediaUrl}
-        alt={title}
-        className="h-full w-full"
-        style={{ objectFit: 'cover', objectPosition: 'center' }}
-        loading="eager"
-        referrerPolicy="no-referrer"
-      />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/25" />
-    </div>
+    <img
+      src={mediaUrl}
+      alt={title}
+      className={mediaClasses}
+      loading="eager"
+      referrerPolicy="no-referrer"
+    />
   );
 }
 
@@ -125,75 +121,38 @@ function ArtworkSlide({
   const displayedLikes = artwork.likes + (isLiked ? 1 : 0);
 
   return (
-    <section className="balade-slide relative flex items-center justify-center bg-black">
+    <section className="balade-slide w-full shrink-0 snap-start snap-always overflow-hidden bg-black md:mx-auto md:max-w-[420px]">
       <motion.div
         layout
         initial={{ opacity: 0, y: 40, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -40, scale: 0.98 }}
         transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1] }}
-        className="relative flex h-full w-full items-center justify-center"
+        className="relative h-full w-full overflow-hidden"
       >
-        {/* Mobile: 100% largeur — Desktop: 9:16 centré, bandes noires à gauche/droite */}
-        <div className="relative h-full w-full md:h-full md:max-h-full md:w-auto md:aspect-[9/16]">
-          <ArtworkMedia
-            mediaType={artwork.mediaType}
-            mediaUrl={artwork.mediaUrl}
-            title={artwork.title}
-          />
+        {/* Arrière-plan : image en position absolue (z-0), ne pousse pas le texte */}
+        <ArtworkMedia
+          mediaType={artwork.mediaType}
+          mediaUrl={artwork.mediaUrl}
+          title={artwork.title}
+        />
 
-          {/* Overlay : infos artiste en haut (marge 20px), titre + description tout en bas */}
-          <div className="pointer-events-none absolute inset-0 flex flex-col">
-            <div className="safe-area-top flex items-start justify-between px-4 pt-5 sm:px-6 md:pt-5">
-              <div className="pointer-events-auto inline-flex items-center gap-3 rounded-full bg-black/45 px-3 py-1.5 text-xs text-slate-200 backdrop-blur-2xl md:bg-black/50 md:backdrop-blur-none">
-                <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-black/40">
-                  {artist?.avatarUrl ? (
-                    <img
-                      src={artist.avatarUrl}
-                      alt={artist.name}
-                      className="h-full w-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <User2 className="h-3.5 w-3.5 opacity-70" />
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-100">
-                    {artist?.name}
-                  </span>
-                  {collection && (
-                    <span className="text-[0.6rem] text-slate-300/80">
-                      {collection.title}
-                    </span>
-                  )}
-                </div>
-              </div>
+        {/* Description : overlay transparent au-dessus de l’image (z-10), dégradé + padding large */}
+        <div className="balade-overlay-bottom">
+          <h2 className="text-lg font-semibold drop-shadow-lg sm:text-xl md:text-2xl">
+            {artwork.title}
+          </h2>
+          <p className="mt-0.5 text-sm drop-shadow-lg">
+            {artist?.name}
+            {collection ? ` · ${collection.title}` : ''}
+          </p>
+          <p className="balade-description-clamp mt-2 text-xs text-white/95 drop-shadow-lg sm:text-sm">
+            {artwork.description}
+          </p>
+        </div>
 
-              <div className="pointer-events-auto rounded-full bg-black/50 px-2.5 py-1 text-[0.6rem] text-slate-200 backdrop-blur-lg md:bg-black/55 md:backdrop-blur-none">
-                Temps de vue moyen : {formatSeconds(artwork.averageViewTime)}
-              </div>
-            </div>
-
-            {/* Titre + description tout en bas de l'image, dégradé léger au ras de la barre noire */}
-            <div className="pointer-events-auto absolute bottom-0 left-0 right-0 flex flex-col justify-end">
-              <div
-                className="balade-gradient-bottom absolute bottom-0 left-0 right-0 w-full"
-                aria-hidden
-              />
-              <div className="relative px-4 pb-1 pt-8 sm:px-6 md:pb-1 md:pt-10">
-                <h2 className="balade-overlay-text text-balance text-lg font-semibold text-slate-50 sm:text-xl md:text-2xl">
-                  {artwork.title}
-                </h2>
-                <p className="balade-overlay-text mt-1 text-xs text-slate-200/95 sm:text-sm md:text-[0.95rem]">
-                  {artwork.description}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Panneau d’actions flottantes à droite (like, prix, profil) */}
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-end pr-3 sm:pr-5">
+        {/* Boutons d’action : colonne verticale à droite */}
+        <div className="balade-actions-safe absolute right-4 z-30 flex flex-col justify-end gap-4">
             <div className="pointer-events-auto flex flex-col items-center gap-3 text-xs text-slate-100">
               <button
                 type="button"
@@ -206,7 +165,7 @@ function ArtworkSlide({
                   }`}
                 />
               </button>
-              <span className="text-[0.6rem] uppercase tracking-[0.2em] text-slate-200/90">
+              <span className="text-[0.6rem] uppercase tracking-[0.2em] text-white drop-shadow-lg">
                 {displayedLikes.toLocaleString('fr-FR')}
               </span>
 
@@ -229,7 +188,6 @@ function ArtworkSlide({
                 <User2 className="h-5 w-5" />
               </button>
             </div>
-          </div>
         </div>
       </motion.div>
     </section>
@@ -2568,18 +2526,20 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-black via-mc-bg to-black">
-      <Navbar
-        user={user}
-        profile={exposantProfile}
-        onConnexionClick={() => setShowAuthModal(true)}
-        onMonEspaceClick={handleMonEspaceClick}
-        onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
-      />
+      {view === 'catalog' && (
+        <Navbar
+          user={user}
+          profile={exposantProfile}
+          onConnexionClick={() => setShowAuthModal(true)}
+          onMonEspaceClick={handleMonEspaceClick}
+          onSignOut={() => supabase.auth.signOut().then(() => setUser(null))}
+        />
+      )}
       <main
         className={
           view === 'catalog'
             ? 'relative flex-1 pb-24 pt-14'
-            : 'relative flex-1 bg-black pt-14'
+            : 'relative flex-1 min-h-0 overflow-hidden bg-black top-0 h-[100dvh]'
         }
       >
         {view === 'catalog' ? (
@@ -2592,7 +2552,7 @@ export default function App() {
             onOpenArtworkDetail={handleOpenArtworkDetail}
           />
         ) : (
-          <div className="balade-scroll-container scroll-smooth bg-black">
+          <div className="balade-scroll-container snap-y snap-mandatory overflow-y-auto scroll-smooth bg-black">
             <AnimatePresence mode="popLayout">
               {feed.map((artwork) => (
                 <ArtworkSlide
