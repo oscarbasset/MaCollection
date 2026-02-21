@@ -1526,11 +1526,14 @@ function BottomNav({ view, onChangeView }) {
   );
 }
 
+/** Vue détaillée complète : image plein format, artiste, description, prix, Like, offre. Données via artwork (Supabase). */
 function ArtworkDetailModal({
   artwork,
   onClose,
   onOpenOffer,
   onOpenArtistProfile,
+  isLiked = false,
+  onToggleLike,
 }) {
   if (!artwork) return null;
 
@@ -1538,108 +1541,116 @@ function ArtworkDetailModal({
   const collection = collections.find(
     (col) => col.id === artwork.collectionId,
   );
+  const displayedLikes = artwork.likes + (isLiked ? 1 : 0);
 
   return (
     <AnimatePresence>
       {artwork && (
         <motion.div
-          className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/75 px-4 py-6 backdrop-blur-2xl sm:py-10"
+          className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/75 p-0 backdrop-blur-2xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          style={{ padding: 0 }}
         >
           <motion.div
             initial={{ y: 40, opacity: 0, scale: 0.97 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 40, opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-panel w-full max-w-3xl rounded-[32px] p-4 sm:p-6 md:p-7 max-h-[90vh] overflow-y-auto"
+            className="relative flex h-[90vh] max-h-[90vh] w-full max-w-4xl flex-nowrap gap-0 overflow-hidden rounded-[32px] border-0 bg-transparent p-0 shadow-2xl"
           >
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
-                  Détail de l’œuvre
-                </p>
-                <h2 className="text-base font-semibold text-slate-50 sm:text-lg md:text-xl">
-                  {artwork.title}
-                </h2>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
-                  {artist && (
-                    <button
-                      type="button"
-                      onClick={() => onOpenArtistProfile(artist.id)}
-                      className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 text-[0.7rem] text-slate-100 hover:bg-white/10"
-                    >
-                      <User2 className="h-3.5 w-3.5" />
-                      {artist.name}
-                    </button>
-                  )}
+            {/* Croix de fermeture : absolute tout en haut à droite */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-slate-100 shadow-lg backdrop-blur-sm hover:bg-black/75"
+              aria-label="Fermer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Bloc gauche : image calée gauche/haut/bas, width:auto height:100%, zéro fond gris */}
+            <div className="flex h-full shrink-0 items-stretch border-0 p-0">
+              <div className="h-full w-max">
+                {artwork.mediaType === 'video' ? (
+                  <video
+                    src={artwork.mediaUrl}
+                    className="block h-full w-auto object-contain object-left object-top"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={artwork.mediaUrl}
+                    alt={artwork.title}
+                    className="block h-full w-auto object-contain object-left object-top"
+                    loading="eager"
+                    referrerPolicy="no-referrer"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Bloc droit : collé à l'image, 100% largeur restante, aucun pixel vide */}
+            <div className="flex min-w-0 flex-1 flex-col overflow-y-auto border-0 bg-slate-900 p-0">
+              <div className="p-4 pr-12 pt-10 sm:p-5 sm:pr-14 sm:pt-12">
+              <h2 className="mb-2 text-lg font-semibold text-slate-50 sm:text-xl md:text-2xl">
+                {artwork.title}
+              </h2>
+              {artist && (
+                <button
+                  type="button"
+                  onClick={() => onOpenArtistProfile(artist.id)}
+                  className="mb-3 inline-flex w-fit items-center gap-1.5 text-sm text-slate-300 hover:text-slate-100"
+                >
+                  <User2 className="h-4 w-4 shrink-0" />
+                  {artist.name}
                   {collection && (
-                    <span className="pill bg-white/5 text-[0.6rem] text-slate-200">
-                      {collection.title}
-                    </span>
+                    <span className="text-slate-500"> · {collection.title}</span>
                   )}
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.6rem] text-emerald-200">
-                    {formatPrice(artwork.price)}
+                </button>
+              )}
+              <p className="mb-3 min-w-0 break-words text-sm leading-relaxed text-slate-200">
+                {artwork.description}
+              </p>
+              <p className="mb-3 inline-block w-fit rounded-full bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-200">
+                {formatPrice(artwork.price)}
+              </p>
+              {typeof onToggleLike === 'function' && (
+                <button
+                  type="button"
+                  onClick={() => onToggleLike(artwork.id)}
+                  className="mb-4 flex w-fit items-center gap-1.5 rounded-full bg-white/5 px-3 py-2 text-slate-100 transition hover:bg-white/10"
+                >
+                  <Heart
+                    className={`h-5 w-5 shrink-0 ${isLiked ? 'fill-rose-500 text-rose-400' : 'text-slate-300'}`}
+                  />
+                  <span className="text-xs font-medium tabular-nums">
+                    {displayedLikes.toLocaleString('fr-FR')}
                   </span>
-                </div>
+                </button>
+              )}
+              <div className="mt-auto flex flex-col gap-2 border-t border-white/10 pt-4 sm:flex-row sm:flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => onOpenArtistProfile(artwork.artistId)}
+                  className="h-10 rounded-full border border-white/15 px-4 text-xs font-medium text-slate-100 hover:bg-white/5"
+                >
+                  Voir le profil de l’artiste
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onOpenOffer(artwork)}
+                  className="flex h-10 items-center justify-center gap-2 rounded-full bg-emerald-400/95 px-5 text-xs font-semibold text-emerald-950 shadow-soft-xl hover:bg-emerald-300"
+                >
+                  <BadgeDollarSign className="h-4 w-4" />
+                  Faire une offre
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-200 hover:bg-white/10"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mb-4 grid gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-              <div className="overflow-hidden rounded-3xl bg-black/70">
-                <ArtworkMedia
-                  mediaType={artwork.mediaType}
-                  mediaUrl={artwork.mediaUrl}
-                  title={artwork.title}
-                />
               </div>
-              <div className="space-y-3 text-sm text-slate-200">
-                <p className="text-xs text-slate-300">
-                  Catégorie :{' '}
-                  {artwork.category === 'peinture' && 'Peinture'}
-                  {artwork.category === 'sculpture' && 'Sculpture'}
-                  {artwork.category === 'style' && 'Style artistique'}
-                  {artwork.category === 'objet' && 'Objet'}
-                </p>
-                <p className="text-sm leading-relaxed">{artwork.description}</p>
-                <p className="text-xs text-slate-400">
-                  Temps de vue moyen :{' '}
-                  <span className="font-medium text-slate-100">
-                    {formatSeconds(artwork.averageViewTime)}
-                  </span>
-                </p>
-                <p className="text-xs text-slate-400">
-                  Dans une vraie version produit, cette vue détaillée pourrait
-                  inclure la provenance, des vues multiples, un certificat et
-                  des informations sur les expositions.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex flex-col gap-2 pb-1 sm:mt-5 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={() => onOpenArtistProfile(artwork.artistId)}
-                className="h-10 rounded-full border border-white/15 px-4 text-xs font-medium text-slate-100 hover:bg-white/5"
-              >
-                Voir le profil de l’artiste
-              </button>
-              <button
-                type="button"
-                onClick={() => onOpenOffer(artwork)}
-                className="flex h-10 items-center justify-center gap-2 rounded-full bg-emerald-400/95 px-5 text-xs font-semibold text-emerald-950 shadow-soft-xl hover:bg-emerald-300"
-              >
-                <BadgeDollarSign className="h-4 w-4" />
-                Faire une offre
-              </button>
             </div>
           </motion.div>
         </motion.div>
@@ -2584,6 +2595,8 @@ export default function App() {
           setActiveDetailArtwork(null);
           handleOpenArtistProfile(artistId);
         }}
+        isLiked={activeDetailArtwork ? !!likedById[activeDetailArtwork.id] : false}
+        onToggleLike={() => activeDetailArtwork && handleToggleLike(activeDetailArtwork.id)}
       />
 
       <OfferModal
